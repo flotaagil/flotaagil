@@ -38,7 +38,7 @@ docs/      informes, decisiones, backlog, evidencias     ambos
 ## Backlog y tablero
 
 - Backlog: [`docs/backlog/backlog.json`](docs/backlog/backlog.json), 25 HU + H-3 (178 SP) en 4 sprints de 2 semanas.
-- Tablero: [FlotaÁgil — Backlog](https://github.com/orgs/flotaagil/projects) (GitHub Projects).
+- Tablero: [FlotaÁgil — Backlog](https://github.com/orgs/flotaagil/projects/2) (GitHub Projects).
 
 ## Cómo contribuir
 

@@ -6,6 +6,7 @@
 |---|---|
 | [`backlog/backlog.json`](backlog/backlog.json) | Product backlog: 25 HU + H-3 (178 SP) |
 | [`sprint0.md`](sprint0.md) | Instrucciones del Sprint 0 (ecosistema GitHub) |
+| [`sprint0_github.py`](sprint0_github.py) | Script idempotente que creó labels, milestones, tablero e issues del Sprint 0 |
 | [`evidencias/`](evidencias/) | Evidencias de ejecución de casos de prueba (CP-xx) |
 
 Se agregarán: informes, registro de decisiones, informe de la PoC de GPS (H-3), runbook y resultados de pruebas de carga y seguridad.
