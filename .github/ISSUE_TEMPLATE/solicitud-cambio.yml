@@ -1,0 +1,89 @@
+name: Solicitud de cambio (RFC)
+description: Cambio de alcance o configuración según el Anexo J
+title: "RFC: "
+labels: ["tipo:cambio"]
+body:
+  - type: input
+    id: solicitante
+    attributes:
+      label: Solicitante
+    validations:
+      required: true
+  - type: textarea
+    id: motivo
+    attributes:
+      label: Motivo
+    validations:
+      required: true
+  - type: input
+    id: elemento
+    attributes:
+      label: Elemento afectado
+      description: HU, componente, configuración o documento.
+    validations:
+      required: true
+  - type: dropdown
+    id: urgencia
+    attributes:
+      label: Urgencia
+      options:
+        - Alta
+        - Media
+        - Baja
+    validations:
+      required: true
+  - type: textarea
+    id: beneficio
+    attributes:
+      label: Beneficio esperado
+    validations:
+      required: true
+  - type: dropdown
+    id: clasificacion
+    attributes:
+      label: Clasificación
+      options:
+        - Estándar
+        - Normal
+        - Emergencia
+    validations:
+      required: true
+  - type: textarea
+    id: impacto
+    attributes:
+      label: Análisis de impacto
+      value: |
+        - **Alcance:**
+        - **Story points:**
+        - **Costo:**
+        - **Calidad:**
+        - **Riesgos:**
+    validations:
+      required: true
+  - type: dropdown
+    id: decision
+    attributes:
+      label: Decisión
+      options:
+        - Pendiente
+        - Aprobada
+        - Rechazada
+        - Aplazada
+    validations:
+      required: true
+  - type: input
+    id: programacion
+    attributes:
+      label: Programación
+      description: Sprint o ventana de cambio.
+      placeholder: Sprint 3
+  - type: textarea
+    id: pruebas
+    attributes:
+      label: Pruebas y reversión
+      description: Cómo se verifica el cambio y cómo se revierte si falla.
+  - type: textarea
+    id: cierre
+    attributes:
+      label: Cierre
+      description: Resultado final, fecha y quién cierra.

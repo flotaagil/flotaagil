@@ -1,0 +1,13 @@
+# Responsables por área. La última regla que coincide gana.
+# Por ahora todo a Renato; al sumarse Carlos, descomentar sus líneas con su usuario real.
+
+*               @renatogonzalez08-source
+
+/web/           @renatogonzalez08-source
+/app/           @renatogonzalez08-source
+
+# /backend/     @<usuario-carlos>
+# /infra/       @<usuario-carlos>
+
+/docs/          @renatogonzalez08-source
+/.github/       @renatogonzalez08-source

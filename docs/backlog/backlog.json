@@ -1,0 +1,536 @@
+{
+  "historias": [
+    {
+      "id": "HU-01",
+      "titulo": "Panel de indicadores de reservas y vehículos",
+      "epica": "Gestión y despacho",
+      "label_epica": "epica:gestion-despacho",
+      "historia": "Como administrador, quiero visualizar un panel con indicadores de reservas y vehículos activos, para conocer el estado de mi operación.",
+      "criterios": "Muestra reservas del día por estado y vehículos en línea/fuera de línea. Actualización por WebSocket sin recargar.",
+      "prioridad": "Media",
+      "sp": 5,
+      "sprint": "Sprint 4",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [],
+      "depende_de": [],
+      "estado_cambio": "Sin cambios (reubicada a S4)"
+    },
+    {
+      "id": "HU-02",
+      "titulo": "Mapa en tiempo real de conductores",
+      "epica": "Gestión y despacho",
+      "label_epica": "epica:gestion-despacho",
+      "historia": "Como despachador, quiero ver en un mapa la ubicación en tiempo real de los conductores conectados, para asignar servicios eficientemente.",
+      "criterios": "Mapa con marcadores móviles; al seleccionar uno muestra nombre, patente y estado. Latencia p95 < 5 s. Posiciones > 60 s se marcan como no confiables.",
+      "prioridad": "Alta",
+      "sp": 13,
+      "sprint": "Sprint 2",
+      "responsable": "Renato",
+      "en_pareja": true,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-12"
+      ],
+      "depende_de": [
+        "H-3"
+      ],
+      "estado_cambio": "Sin cambios"
+    },
+    {
+      "id": "HU-03",
+      "titulo": "Ingresar, editar y cancelar reservas",
+      "epica": "Gestión y despacho",
+      "label_epica": "epica:gestion-despacho",
+      "historia": "Como despachador, quiero ingresar, editar y cancelar reservas, para mantener un registro único de solicitudes propias, del portal y de convenios.",
+      "criterios": "Formulario validado; edición antes del despacho; cancelación con motivo. Incluye sentido del trayecto (desde/hacia aeropuerto, urbano) y número de vuelo opcional.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 1",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-05",
+        "CP-06"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (sentido y vuelo)"
+    },
+    {
+      "id": "HU-04",
+      "titulo": "Sugerencia del conductor más apto (urbano)",
+      "epica": "Gestión y despacho",
+      "label_epica": "epica:gestion-despacho",
+      "historia": "Como despachador, quiero recibir la sugerencia del conductor más apto al asignar una reserva urbana, confirmando siempre de forma manual.",
+      "criterios": "Ordena por distancia (PostGIS) y, ante diferencias < 1 km, por tiempo desde el último viaje. Desplegable con el resto de disponibles. Nunca asigna sin confirmación (RN-02). Para recogidas en aeropuerto delega en HU-29.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 3",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-01",
+        "RN-02"
+      ],
+      "casos_prueba": [
+        "CP-18"
+      ],
+      "depende_de": [
+        "H-3"
+      ],
+      "estado_cambio": "Modificada (regla de sugerencia; 13→8 SP)"
+    },
+    {
+      "id": "HU-05",
+      "titulo": "Cierre o anulación forzada de viaje",
+      "epica": "Gestión y despacho",
+      "label_epica": "epica:gestion-despacho",
+      "historia": "Como despachador, quiero forzar el cierre o la anulación de un viaje en curso, para resolver casos en que el conductor pierde conexión.",
+      "criterios": "Botón en el panel; exige motivo; queda en AUDITORIA con el usuario responsable (RN-11).",
+      "prioridad": "Alta",
+      "sp": 5,
+      "sprint": "Sprint 4",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-11"
+      ],
+      "casos_prueba": [],
+      "depende_de": [],
+      "estado_cambio": "Sin cambios"
+    },
+    {
+      "id": "HU-06",
+      "titulo": "Reportes operativos y exportación CSV",
+      "epica": "Gestión y despacho",
+      "label_epica": "epica:gestion-despacho",
+      "historia": "Como administrador, quiero generar reportes operativos (liquidación diaria por conductor, facturación por convenio, cancelaciones e historial), para controlar la recaudación y facturar.",
+      "criterios": "Filtros por fecha, conductor y convenio; desglose por método de pago; tasa de cancelación por origen; exportación CSV; totales del período.",
+      "prioridad": "Media",
+      "sp": 8,
+      "sprint": "Sprint 4",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-25"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Fusiona HU-06, 07, 08 y 09 (23→8 SP)"
+    },
+    {
+      "id": "HU-10",
+      "titulo": "Administrar conductores y vehículos",
+      "epica": "Gestión y despacho",
+      "label_epica": "epica:gestion-despacho",
+      "historia": "Como administrador, quiero registrar y administrar conductores y vehículos, para mantener actualizada mi base de datos.",
+      "criterios": "CRUD de conductores con credenciales; CRUD de vehículos; asociación N:M conductor-vehículo; carga inicial por CSV.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 1",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-01",
+        "CP-02"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (carga CSV)"
+    },
+    {
+      "id": "HU-11",
+      "titulo": "Administrar convenios con link y contraseña",
+      "epica": "Convenios",
+      "label_epica": "epica:convenios",
+      "historia": "Como administrador, quiero crear, editar y activar/desactivar convenios con link único y contraseña, para habilitar la reserva digital de clientes corporativos.",
+      "criterios": "Genera token aleatorio de 256 bits; define y rota la contraseña; desactivar no borra historial (RN-08); listado con volumen de reservas.",
+      "prioridad": "Alta",
+      "sp": 13,
+      "sprint": "Sprint 3",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [
+        "RN-08"
+      ],
+      "casos_prueba": [
+        "CP-22"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Sin cambios"
+    },
+    {
+      "id": "HU-12",
+      "titulo": "Auditoría de cambios en convenios",
+      "epica": "Convenios",
+      "label_epica": "epica:convenios",
+      "historia": "Como administrador, quiero que quede registrado quién y cuándo modificó la contraseña o el estado de un convenio, para tener trazabilidad ante disputas.",
+      "criterios": "Registro de solo inserción con usuario, acción y fecha; consultable desde el panel (RN-12).",
+      "prioridad": "Media",
+      "sp": 5,
+      "sprint": "Sprint 4",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-12"
+      ],
+      "casos_prueba": [
+        "CP-24"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Sin cambios"
+    },
+    {
+      "id": "HU-13",
+      "titulo": "Estado Disponible/No disponible del conductor",
+      "epica": "Operación en ruta",
+      "label_epica": "epica:operacion-ruta",
+      "historia": "Como conductor, quiero cambiar mi estado a Disponible o No Disponible indicando el vehículo que usaré, para operar con información correcta.",
+      "criterios": "Selector de vehículo si tiene más de uno (RN-05); exige consentimiento informado de ubicación al iniciar el turno; sincronización inmediata con el panel.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 1",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [
+        "RN-01",
+        "RN-05",
+        "RN-18"
+      ],
+      "casos_prueba": [
+        "CP-03",
+        "CP-04"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (consentimiento GPS)"
+    },
+    {
+      "id": "HU-14",
+      "titulo": "Notificación de viaje asignado",
+      "epica": "Operación en ruta",
+      "label_epica": "epica:operacion-ruta",
+      "historia": "Como conductor, quiero recibir una notificación clara cuando se me asigne un viaje, viendo origen, destino, pasajero y tarifa.",
+      "criterios": "Alerta sonora y visual; muestra datos del viaje y, si aplica, número y ETA del vuelo.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 2",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-13"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (datos de vuelo)"
+    },
+    {
+      "id": "HU-15",
+      "titulo": "Aceptar o rechazar viaje en 60 s",
+      "epica": "Operación en ruta",
+      "label_epica": "epica:operacion-ruta",
+      "historia": "Como conductor, quiero contar con 60 segundos para aceptar o rechazar un viaje asignado, para que la central pueda reasignarlo si no respondo.",
+      "criterios": "Botones Aceptar/Rechazar; sin respuesta en 60 s o rechazo, la reserva vuelve a SOLICITADO (RN-04) y se registra en ASIGNACION.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 2",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-03",
+        "RN-04"
+      ],
+      "casos_prueba": [
+        "CP-13",
+        "CP-14"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Sin cambios"
+    },
+    {
+      "id": "HU-16",
+      "titulo": "Estados del viaje y registro de pago",
+      "epica": "Operación en ruta",
+      "label_epica": "epica:operacion-ruta",
+      "historia": "Como conductor, quiero actualizar el estado del viaje y registrar método de pago y monto al finalizar, para respaldar la cuadratura.",
+      "criterios": "Botones secuenciales EN_CAMINO → PASAJERO_A_BORDO → FINALIZADO; EN_ZONA se marca automáticamente por geocerca de 150 m; pago y monto obligatorios (RN-10).",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 2",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [
+        "RN-03",
+        "RN-10"
+      ],
+      "casos_prueba": [
+        "CP-15",
+        "CP-16"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (estado EN_ZONA)"
+    },
+    {
+      "id": "HU-17",
+      "titulo": "Abrir Google Maps o Waze",
+      "epica": "Operación en ruta",
+      "label_epica": "epica:operacion-ruta",
+      "historia": "Como conductor, quiero un botón que abra Google Maps o Waze con las coordenadas del viaje, para no digitar direcciones.",
+      "criterios": "Botón visible durante el viaje activo que abre la aplicación externa con coordenadas cargadas.",
+      "prioridad": "Media",
+      "sp": 3,
+      "sprint": "Sprint 1",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [],
+      "depende_de": [],
+      "estado_cambio": "Sin cambios (reubicada a S1)"
+    },
+    {
+      "id": "HU-18",
+      "titulo": "Mi turno: viajes completados",
+      "epica": "Operación en ruta",
+      "label_epica": "epica:operacion-ruta",
+      "historia": "Como conductor, quiero ver los viajes completados en mi turno, para respaldar mis servicios.",
+      "criterios": "Pantalla Mi Turno con hora, origen, destino, monto y método de pago.",
+      "prioridad": "Baja",
+      "sp": 5,
+      "sprint": "Sprint 4",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [],
+      "depende_de": [],
+      "estado_cambio": "Sin cambios"
+    },
+    {
+      "id": "HU-19",
+      "titulo": "Formulario web de solicitud sin cuenta",
+      "epica": "Módulo pasajero",
+      "label_epica": "epica:modulo-pasajero",
+      "historia": "Como pasajero, quiero solicitar un viaje desde un formulario web sin crear cuenta, indicando nombre, WhatsApp, origen, destino y vuelo si corresponde.",
+      "criterios": "Formulario público validado; aviso de privacidad y aceptación de avisos por WhatsApp; confirmación visual de solicitud recibida.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 1",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-07"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (vuelo, aviso de privacidad)"
+    },
+    {
+      "id": "HU-20",
+      "titulo": "Verificación del pasajero por WhatsApp",
+      "epica": "Módulo pasajero",
+      "label_epica": "epica:modulo-pasajero",
+      "historia": "Como sistema, quiero verificar el número del pasajero por WhatsApp antes de confirmar la solicitud, para evitar reservas falsas.",
+      "criterios": "Plantilla con botón Confirmar/Cancelar; la reserva queda en PENDIENTE_CONFIRMACION y expira a los 15 minutos; máximo 3 envíos por número cada 15 minutos (RN-06).",
+      "prioridad": "Alta",
+      "sp": 5,
+      "sprint": "Sprint 1",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-06"
+      ],
+      "casos_prueba": [
+        "CP-07",
+        "CP-08",
+        "CP-09"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (SMS OTP → WhatsApp; 8→5 SP)"
+    },
+    {
+      "id": "HU-21",
+      "titulo": "Avisos de estado y cancelación por WhatsApp",
+      "epica": "Módulo pasajero",
+      "label_epica": "epica:modulo-pasajero",
+      "historia": "Como pasajero, quiero recibir por WhatsApp los avisos de estado de mi viaje y poder cancelarlo respondiendo, para no llamar a la central.",
+      "criterios": "Avisos: confirmación, conductor asignado, en camino, «tu vehículo te espera» (EN_ZONA). Cancelación por respuesta solo sin conductor asignado (RN-09).",
+      "prioridad": "Media",
+      "sp": 5,
+      "sprint": "Sprint 2",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-09"
+      ],
+      "casos_prueba": [
+        "CP-16",
+        "CP-17"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Modificada (SMS → WhatsApp; 8→5 SP)"
+    },
+    {
+      "id": "HU-24",
+      "titulo": "Calificación del servicio (1 a 5)",
+      "epica": "Módulo pasajero",
+      "label_epica": "epica:modulo-pasajero",
+      "historia": "Como pasajero, quiero calificar el servicio de 1 a 5 al finalizar, para dejar retroalimentación.",
+      "criterios": "Encuesta por WhatsApp al finalizar; opcional (RN-14); asociada al conductor y visible en HU-06.",
+      "prioridad": "Baja",
+      "sp": 3,
+      "sprint": "Sprint 2",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-14"
+      ],
+      "casos_prueba": [],
+      "depende_de": [],
+      "estado_cambio": "Modificada (canal WhatsApp)"
+    },
+    {
+      "id": "HU-25",
+      "titulo": "Acceso de convenio con link protegido",
+      "epica": "Convenios",
+      "label_epica": "epica:convenios",
+      "historia": "Como supervisor de una empresa con convenio, quiero acceder a un link protegido con contraseña para solicitar viajes a nombre de mi empresa.",
+      "criterios": "El link pide contraseña y lleva al formulario; la reserva queda etiquetada con el convenio y omite la verificación (RN-07). Bloqueo tras 5 intentos fallidos.",
+      "prioridad": "Alta",
+      "sp": 13,
+      "sprint": "Sprint 4",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [
+        "RN-07",
+        "RN-08"
+      ],
+      "casos_prueba": [
+        "CP-26"
+      ],
+      "depende_de": [
+        "HU-11"
+      ],
+      "estado_cambio": "Sin cambios"
+    },
+    {
+      "id": "HU-26",
+      "titulo": "Registrar número de vuelo",
+      "epica": "Aeropuerto",
+      "label_epica": "epica:aeropuerto",
+      "historia": "Como despachador, quiero registrar el número de vuelo asociado a una reserva desde o hacia el aeropuerto, para que el sistema lo monitoree.",
+      "criterios": "Valida formato IATA; consulta inicial a la API de vuelos para confirmar que existe en la fecha; guarda hora programada.",
+      "prioridad": "Alta",
+      "sp": 5,
+      "sprint": "Sprint 1",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-11"
+      ],
+      "depende_de": [],
+      "estado_cambio": "Nueva (CC-02)"
+    },
+    {
+      "id": "HU-27",
+      "titulo": "Monitoreo de vuelo y ajuste de recogida",
+      "epica": "Aeropuerto",
+      "label_epica": "epica:aeropuerto",
+      "historia": "Como despachador, quiero que el sistema monitoree el vuelo y proponga ajustar la hora de recogida, para no llegar ni antes ni después del pasajero.",
+      "criterios": "Consultas desde 3 h antes (cada 30 min; cada 10 min en la última hora); si la ETA cambia ≥ 15 min propone nueva hora (ETA + margen configurable) y el despachador la confirma.",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 3",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [
+        "RN-02",
+        "RN-17"
+      ],
+      "casos_prueba": [
+        "CP-21"
+      ],
+      "depende_de": [
+        "HU-26"
+      ],
+      "estado_cambio": "Nueva (CC-02)"
+    },
+    {
+      "id": "HU-28",
+      "titulo": "Alertas de demora, cancelación o desvío",
+      "epica": "Aeropuerto",
+      "label_epica": "epica:aeropuerto",
+      "historia": "Como despachador o administrador, quiero recibir alertas por demoras, cancelaciones o desvíos de vuelos, para reaccionar a tiempo.",
+      "criterios": "Alerta visual y sonora en el panel; registro de la alerta; marca la reserva afectada.",
+      "prioridad": "Media",
+      "sp": 5,
+      "sprint": "Sprint 3",
+      "responsable": "Renato",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-21"
+      ],
+      "depende_de": [
+        "HU-26"
+      ],
+      "estado_cambio": "Nueva (CC-02)"
+    },
+    {
+      "id": "HU-29",
+      "titulo": "Fila virtual del aeropuerto",
+      "epica": "Aeropuerto",
+      "label_epica": "epica:aeropuerto",
+      "historia": "Como despachador, quiero que los conductores que esperan en el aeropuerto formen una fila virtual por orden de llegada, para asignar los viajes desde el aeropuerto con justicia.",
+      "criterios": "Ingreso a la fila al entrar a la geocerca estando DISPONIBLE; salida tras 10 min fuera de la zona, al pasar a NO_DISPONIBLE o al ser asignado; el conductor ve su posición (RN-16).",
+      "prioridad": "Alta",
+      "sp": 8,
+      "sprint": "Sprint 3",
+      "responsable": "Carlos",
+      "en_pareja": true,
+      "reglas": [
+        "RN-16"
+      ],
+      "casos_prueba": [
+        "CP-19",
+        "CP-20"
+      ],
+      "depende_de": [
+        "HU-02",
+        "H-3"
+      ],
+      "estado_cambio": "Nueva (CC-02)"
+    },
+    {
+      "id": "HU-30",
+      "titulo": "Chat de WhatsApp desde el panel",
+      "epica": "Módulo pasajero",
+      "label_epica": "epica:modulo-pasajero",
+      "historia": "Como despachador, quiero atender desde el panel la conversación de WhatsApp de cada pasajero, para resolver dudas en el mismo hilo de su reserva.",
+      "criterios": "Bandeja de conversaciones por pasajero con la reserva vinculada; respuesta dentro de la ventana de 24 h; fuera de ella, solo plantillas aprobadas.",
+      "prioridad": "Media",
+      "sp": 5,
+      "sprint": "Sprint 4",
+      "responsable": "Carlos",
+      "en_pareja": false,
+      "reglas": [],
+      "casos_prueba": [
+        "CP-27"
+      ],
+      "depende_de": [
+        "HU-20"
+      ],
+      "estado_cambio": "Nueva (reemplaza HU-22 y HU-23)"
+    }
+  ],
+  "tareas": [
+    {
+      "id": "H-3",
+      "titulo": "Prueba de concepto de GPS en segundo plano",
+      "tipo": "tarea",
+      "sprint": "Sprint 1",
+      "responsable": "Renato",
+      "descripcion": "Hito H-3, riesgo R-01. Primera tarea del Sprint 1: validar Capacitor + background-geolocation en Android 10+ con la pantalla apagada y la app en segundo plano. Resultado: informe técnico corto en docs/ con teléfonos probados, frecuencia lograda, consumo de batería y datos. Bloquea HU-02, HU-04 y HU-29."
+    }
+  ]
+}

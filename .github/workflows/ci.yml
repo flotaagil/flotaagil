@@ -1,0 +1,208 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Revisa qué áreas ya tienen manifiesto. Los jobs de cada área se saltan si aún no existe.
+  detectar:
+    name: Detectar áreas
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.areas.outputs.backend }}
+      web: ${{ steps.areas.outputs.web }}
+      app: ${{ steps.areas.outputs.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: areas
+        shell: bash
+        run: |
+          if compgen -G "backend/requirements*.txt" > /dev/null || [ -f backend/pyproject.toml ]; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+          fi
+          for area in web app; do
+            if [ -f "$area/package.json" ]; then
+              echo "$area=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "$area=false" >> "$GITHUB_OUTPUT"
+            fi
+          done
+          cat "$GITHUB_OUTPUT"
+
+  pr-title:
+    name: Título del PR
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          scopes: |
+            backend
+            web
+            app
+            infra
+            docs
+            ci
+            deps
+          requireScope: false
+          # El asunto va en español y puede empezar con mayúscula o minúscula.
+          subjectPattern: ^.+$
+
+  backend:
+    name: Backend
+    needs: detectar
+    if: needs.detectar.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_DB: flotaagil
+          POSTGRES_USER: flotaagil
+          POSTGRES_PASSWORD: flotaagil-ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U flotaagil"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.2
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgis://flotaagil:flotaagil-ci@localhost:5432/flotaagil
+      REDIS_URL: redis://localhost:6379/0
+      DJANGO_SECRET_KEY: clave-solo-para-ci
+      DJANGO_DEBUG: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements*.txt
+            backend/pyproject.toml
+      - name: Instalar GDAL (GeoDjango)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gdal-bin libgdal-dev
+      - name: Instalar dependencias
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install -e ".[dev]"
+          fi
+          pip install ruff bandit pytest pytest-django pytest-cov
+      - name: Ruff
+        run: ruff check . && ruff format --check .
+      - name: Bandit
+        run: bandit -r . -q -x "./.venv,./tests,*/tests/*,*/migrations/*"
+      - name: Pytest con cobertura
+        run: pytest --cov --cov-report=term-missing --cov-report=xml --cov-fail-under=70
+
+  web:
+    name: Web
+    needs: detectar
+    if: needs.detectar.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - name: ESLint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Vitest
+        run: npx vitest run
+      - name: Build
+        run: npm run build
+
+  app:
+    name: App del conductor
+    needs: detectar
+    if: needs.detectar.outputs.app == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - name: ESLint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Vitest
+        run: npx vitest run
+      - name: Build
+        run: npm run build
+
+  # Check obligatorio del ruleset. Falla si algún job falló o se canceló; los saltados no cuentan.
+  ci:
+    name: ci
+    needs: [detectar, pr-title, backend, web, app]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resultado
+        shell: bash
+        run: |
+          echo "detectar=${{ needs.detectar.result }} pr-title=${{ needs.pr-title.result }} backend=${{ needs.backend.result }} web=${{ needs.web.result }} app=${{ needs.app.result }}"
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "::error::Al menos un job falló o se canceló."
+            exit 1
+          fi

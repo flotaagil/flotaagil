@@ -1,0 +1,62 @@
+name: Historia de usuario
+description: Nueva historia de usuario del product backlog
+title: "HU-XX · "
+labels: ["tipo:historia"]
+body:
+  - type: input
+    id: id
+    attributes:
+      label: ID de la HU
+      placeholder: HU-31
+    validations:
+      required: true
+  - type: textarea
+    id: historia
+    attributes:
+      label: Historia
+      description: Como <rol>, quiero <acción>, para <beneficio>.
+      placeholder: Como despachador, quiero …, para …
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Uno por línea, como lista de verificación.
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: input
+    id: sp
+    attributes:
+      label: Story points
+      placeholder: "5"
+    validations:
+      required: true
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad
+      options:
+        - Alta
+        - Media
+        - Baja
+    validations:
+      required: true
+  - type: input
+    id: reglas
+    attributes:
+      label: Reglas de negocio
+      placeholder: RN-01, RN-02
+  - type: input
+    id: casos
+    attributes:
+      label: Casos de prueba
+      placeholder: CP-05, CP-06
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Dependencias
+      description: HU o tareas que deben estar terminadas antes (enlaza el issue).
+      placeholder: "- #12"

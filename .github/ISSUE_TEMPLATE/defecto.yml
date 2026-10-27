@@ -1,0 +1,57 @@
+name: Defecto
+description: Reportar un error encontrado en pruebas o en uso
+title: "Defecto: "
+labels: ["tipo:defecto"]
+body:
+  - type: input
+    id: relacion
+    attributes:
+      label: HU o caso de prueba relacionado
+      placeholder: HU-16 / CP-15
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducir
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: obtenido
+    attributes:
+      label: Resultado obtenido
+    validations:
+      required: true
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: Capturas, logs o enlace a docs/evidencias/. Sin datos personales reales.
+  - type: dropdown
+    id: severidad
+    attributes:
+      label: Severidad
+      options:
+        - Crítica
+        - Alta
+        - Media
+        - Baja
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión o commit
+      placeholder: v0.2.0 / a1b2c3d
+    validations:
+      required: true

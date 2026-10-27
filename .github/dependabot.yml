@@ -1,0 +1,40 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore(deps)
+
+  # Activar cuando existan los manifiestos (Sprint 1).
+  # - package-ecosystem: pip
+  #   directory: /backend
+  #   schedule:
+  #     interval: weekly
+  #   commit-message:
+  #     prefix: chore(deps)
+  # - package-ecosystem: npm
+  #   directory: /web
+  #   schedule:
+  #     interval: weekly
+  #   commit-message:
+  #     prefix: chore(deps)
+  # - package-ecosystem: npm
+  #   directory: /app
+  #   schedule:
+  #     interval: weekly
+  #   commit-message:
+  #     prefix: chore(deps)
+  # - package-ecosystem: docker
+  #   directory: /backend
+  #   schedule:
+  #     interval: weekly
+  #   commit-message:
+  #     prefix: chore(deps)
+  # - package-ecosystem: docker
+  #   directory: /web
+  #   schedule:
+  #     interval: weekly
+  #   commit-message:
+  #     prefix: chore(deps)

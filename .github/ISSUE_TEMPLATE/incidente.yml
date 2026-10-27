@@ -1,0 +1,84 @@
+name: Incidente
+description: Interrupción o degradación del servicio en operación
+title: "Incidente: "
+labels: ["tipo:incidente"]
+body:
+  - type: input
+    id: deteccion
+    attributes:
+      label: Fecha y hora de detección
+      placeholder: 2026-11-10 14:35 (America/Santiago)
+    validations:
+      required: true
+  - type: input
+    id: reporta
+    attributes:
+      label: Quién reporta
+    validations:
+      required: true
+  - type: input
+    id: componente
+    attributes:
+      label: Servicio y componente afectados
+      placeholder: API / Celery beat / WhatsApp / app del conductor
+    validations:
+      required: true
+  - type: textarea
+    id: descripcion
+    attributes:
+      label: Descripción y evidencia
+      description: Sin datos personales reales.
+    validations:
+      required: true
+  - type: dropdown
+    id: impacto
+    attributes:
+      label: Impacto
+      options:
+        - Alto
+        - Medio
+        - Bajo
+    validations:
+      required: true
+  - type: dropdown
+    id: urgencia
+    attributes:
+      label: Urgencia
+      options:
+        - Alta
+        - Media
+        - Baja
+    validations:
+      required: true
+  - type: dropdown
+    id: prioridad
+    attributes:
+      label: Prioridad
+      options:
+        - P1
+        - P2
+        - P3
+        - P4
+    validations:
+      required: true
+  - type: input
+    id: responsable
+    attributes:
+      label: Responsable
+  - type: textarea
+    id: acciones
+    attributes:
+      label: Acciones
+      description: Bitácora de acciones con hora.
+  - type: input
+    id: restablecimiento
+    attributes:
+      label: Hora de restablecimiento
+  - type: textarea
+    id: causa
+    attributes:
+      label: Causa
+  - type: textarea
+    id: cierre
+    attributes:
+      label: Cierre
