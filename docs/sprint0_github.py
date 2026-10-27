@@ -424,9 +424,29 @@ def buscar_existente(issue, existentes):
     return next((e for e in existentes if e["title"].startswith(f"{issue['clave']} ·")), None)
 
 
+def leer_issues():
+    """Issues del repo por GraphQL: el listado REST tarda en mostrar los recién creados."""
+    issues, cursor = [], None
+    while True:
+        datos = graphql("""
+            query($o: String!, $r: String!, $c: String) {
+              repository(owner: $o, name: $r) {
+                issues(first: 100, after: $c, states: [OPEN, CLOSED]) {
+                  pageInfo { hasNextPage endCursor }
+                  nodes { number title body id }
+                }
+              }
+            }""", o=ORG, r=REPO_NOMBRE, c=cursor)["repository"]["issues"]
+        issues += [{"number": i["number"], "title": i["title"], "body": i["body"], "node_id": i["id"]}
+                   for i in datos["nodes"]]
+        if not datos["pageInfo"]["hasNextPage"]:
+            return issues
+        cursor = datos["pageInfo"]["endCursor"]
+
+
 def etapa_issues(backlog, milestones):
     print("\nIssues")
-    existentes = [i for i in listar(f"repos/{REPO}/issues?state=all&per_page=100") if "pull_request" not in i]
+    existentes = leer_issues()
     issues = definir_issues(backlog, milestones)
     for issue in issues:
         actual = buscar_existente(issue, existentes)
