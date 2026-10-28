@@ -157,7 +157,7 @@ En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y la
 | 16:23–16:26 | 60 por minuto | 0 |
 | 16:27 (hasta la desconexión) | 50 | 0 |
 
-**Resultado.** Mismo comportamiento que D1: el JavaScript deja de recibir posiciones unos 50 s después de iniciar con la app en segundo plano. El ajuste no tiene efecto.
+**Resultado.** Mismo comportamiento que D1: el JavaScript deja de recibir posiciones unos 60 s después de pasar a segundo plano. El ajuste no tiene efecto. El CSV de la sesión (`S20261028-162116`) lo confirma: muestras a los 30,3 s y 30,0 s, y la siguiente recién al reabrir la app, con un **intervalo de 348,9 s** (C3 falla).
 
 **Hallazgo adicional.** Desde las 16:22:21 el proceso de la app no escribe ninguna línea en el log, incluidas las del puente nativo de Capacitor. El log no permite distinguir si se suspende solo el JavaScript (proceso de render del WebView) o el proceso completo de la app pese al servicio en primer plano. La diferencia es decisiva: en el segundo caso un módulo nativo tampoco resolvería el problema.
 
