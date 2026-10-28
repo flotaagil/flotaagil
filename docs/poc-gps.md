@@ -62,7 +62,7 @@ HyperOS restringe las apps en segundo plano más que Android estándar. La **con
 | Esc. | Ahorro de batería de la app | Inicio automático | Bloqueada en recientes | Ahorro de batería del sistema | Ubicación precisa | Notificaciones | Confirmado al probar |
 |---|---|---|---|---|---|---|---|
 | E1 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | ‹sí/no› |
-| E2 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | ‹sí/no› |
+| E2 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | Sí (además «Pausar actividad si no se utiliza» desactivado) |
 | E2b | Ahorro de batería inteligente (valor por defecto) | Desactivado (por defecto) | No | Desactivado | Sí | Permitidas | ‹sí/no› |
 | E3 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | ‹sí/no› |
 | E4 | Sin restricciones | Activado | **No** (hay que desbloquearla para poder cerrarla) | Desactivado | Sí | Permitidas | ‹sí/no› |
@@ -92,7 +92,7 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 | Esc. | Tel. | Sesión | Muestras | Intervalo mediana / p95 / máx (s) | Huecos > 60 s | Precisión mediana / p95 (m) | Batería (%/h) | Datos estimados (MB/h · MB/8 h) | Datos medidos en Ajustes (MB) | Observaciones |
 |---|---|---|---|---|---|---|---|---|---|---|
 | E1 | T1 | ‹S…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› |
-| E2 | T1 | | | | | | | | | |
+| E2 | T1 | S20261028-171058 | 53 | 30,0 / 33,3 / 34,9 | 0 | 3,4 / 11,9 | 6,8 (3 % en 0,44 h; baja resolución) | 0,020 · 0,16 | ‹pendiente› | **Parcial: 26,6 min de 60.** Pantalla apagada todo el periodo, sin cable. Build con ajuste de visibilidad del WebView (D3b). Evidencia: `evidencias/H-3/E2-*-anon.csv` |
 | E2b | T1 | | | | | | | | | |
 | E3 | T1 | | | | | | | | | |
 | E4 | T1 | | | | | | | | | ‹¿siguió el servicio tras cerrar la app? hueco hasta reabrir› |
