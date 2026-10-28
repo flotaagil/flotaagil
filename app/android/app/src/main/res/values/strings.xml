@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FlotaÁgil Conductor</string>
+    <string name="title_activity_main">FlotaÁgil Conductor</string>
+    <string name="package_name">cl.flotaagil.conductor</string>
+    <string name="custom_url_scheme">cl.flotaagil.conductor</string>
+</resources>
