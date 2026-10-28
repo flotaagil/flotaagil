@@ -144,7 +144,7 @@ En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y la
 
 **Decisión del equipo (2026-10-28).** Se descarta exigir que se siga registrando con la app cerrada. Mitigaciones: candado en recientes (guía al conductor), retomar la sesión automáticamente al reabrir si el turno sigue activo, y el umbral de 60 s de HU-02 en el panel para marcar la posición como no confiable. El único problema por resolver en H-3 es la suspensión del JavaScript con pantalla apagada.
 
-**Siguiente paso.** Probar un ajuste en `MainActivity` (prioridad del proceso de render del WebView) y repetir esta prueba. Si no hay huecos > 60 s, se continúa con E2 y E3. Si no, se propone un módulo nativo reducido (ADR-001), sin reinicio tras cierre ni permiso de ubicación «todo el tiempo».
+**Siguiente paso.** Probar un ajuste en `MainActivity` (prioridad del proceso de render del WebView) y repetir esta prueba con cable. Si no hay huecos > 60 s, la confirmación definitiva es E2 sin cable (60 min, pantalla apagada); si E2 pasa, se continúa con E3. Si la prueba con cable falla, se evalúa un segundo ajuste del WebView y, si tampoco basta, se propone un módulo nativo reducido (ADR-001), sin reinicio tras cierre ni permiso de ubicación «todo el tiempo».
 
 ## 8. Conclusión y decisión
 
