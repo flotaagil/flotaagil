@@ -51,9 +51,25 @@ Validar que `@capacitor-community/background-geolocation` en Android 10+ entrega
 
 | Teléfono | Marca y modelo | Android | Capa del fabricante | Ahorro de batería de la app |
 |---|---|---|---|---|
-| T1 | ‹marca y modelo› | ‹versión› | ‹One UI / MIUI / HyperOS / stock…› | ‹optimizada / sin restricciones› |
+| T1 | Xiaomi 14T | 16 (parche de seguridad 2026-08-01) | Xiaomi HyperOS 3.0.303.0 | Ver tabla por escenario |
 
-Condiciones comunes: datos móviles o Wi-Fi ‹…›, ubicación en «alta precisión», permiso de ubicación «solo mientras se usa la app» (el plugin usa servicio en primer plano y no requiere ubicación en segundo plano).
+Condiciones comunes: datos móviles o Wi-Fi ‹…›, ubicación del sistema activada, permiso de ubicación «Mientras se usa la app» con **ubicación precisa activada** (el plugin usa un servicio en primer plano y no requiere ubicación en segundo plano), notificaciones de la app permitidas.
+
+### 4.1 Configuración del teléfono por escenario
+
+HyperOS restringe las apps en segundo plano más que Android estándar. La **configuración recomendada** es la que se le pediría al conductor en la app real; E2b mide qué pasa si el conductor no la aplica.
+
+| Esc. | Ahorro de batería de la app | Inicio automático | Bloqueada en recientes | Ahorro de batería del sistema | Ubicación precisa | Notificaciones | Confirmado al probar |
+|---|---|---|---|---|---|---|---|
+| E1 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | ‹sí/no› |
+| E2 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | ‹sí/no› |
+| E2b | Ahorro de batería inteligente (valor por defecto) | Desactivado (por defecto) | No | Desactivado | Sí | Permitidas | ‹sí/no› |
+| E3 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | ‹sí/no› |
+| E4 | Sin restricciones | Activado | **No** (hay que desbloquearla para poder cerrarla) | Desactivado | Sí | Permitidas | ‹sí/no› |
+| E5 | Sin restricciones | Activado | Sí | **Activado** | Sí | Permitidas | ‹sí/no› |
+| E6 | Sin restricciones | Activado | Sí | Desactivado | Sí | Permitidas | ‹sí/no› |
+
+Si algún ajuste quedó distinto al planificado, se corrige la fila y se explica en Observaciones.
 
 ## 5. Escenarios
 
@@ -61,6 +77,7 @@ Condiciones comunes: datos móviles o Wi-Fi ‹…›, ubicación en «alta prec
 |---|---|---|---|---|---|
 | E1 | Primer plano | 15 min | Viaje | Encendida | App abierta, en movimiento |
 | E2 | Espera con pantalla apagada | 60 min | Espera | Apagada | Teléfono quieto, app en segundo plano |
+| E2b | Espera sin configurar el teléfono | 60 min | Espera | Apagada | Igual que E2, con los ajustes de HyperOS por defecto (sección 4.1) |
 | E3 | Viaje con pantalla apagada | 60 min | Viaje | Apagada | En vehículo, app en segundo plano |
 | E4 | Cerrar la app | 10 min + reabrir | Viaje | Apagada | Iniciar, deslizar la app fuera de recientes, esperar 5 min, reabrir |
 | E5 | Ahorro de batería activo | 30 min | Espera | Apagada | Igual que E2 con el ahorro de batería del sistema encendido |
@@ -76,6 +93,7 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 |---|---|---|---|---|---|---|---|---|---|---|
 | E1 | T1 | ‹S…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› |
 | E2 | T1 | | | | | | | | | |
+| E2b | T1 | | | | | | | | | |
 | E3 | T1 | | | | | | | | | |
 | E4 | T1 | | | | | | | | | ‹¿siguió el servicio tras cerrar la app? hueco hasta reabrir› |
 | E5 | T1 | | | | | | | | | |
@@ -104,7 +122,7 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 
 ## 9. Limitaciones
 
-- Una sola marca de teléfono: los resultados no representan a otros fabricantes con gestores de batería más agresivos.
+- Un solo teléfono (Xiaomi 14T, HyperOS 3): los resultados no representan a otros fabricantes ni versiones de Android, aunque HyperOS está entre las capas más restrictivas con apps en segundo plano.
 - Los datos son estimados (con sobrecarga supuesta) y se contrastan con una lectura manual.
 - La batería medida corresponde al GPS a ~1 Hz (peor caso).
 - JavaScript no detecta si la pantalla está apagada: esa condición la registra quien prueba, por escenario.
