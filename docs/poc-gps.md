@@ -196,7 +196,30 @@ En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y la
 
 **Observación.** Con la pantalla apagada, Android entregó posiciones con menos frecuencia (en algunos tramos 5 a 9 entregas en 30 s, con pausas de hasta 36 s en el registro del sistema), por lo que algunos intervalos llegan a 32–35 s en vez de 30 s. No afecta C3, pero hay que vigilarlo en E2 y E3: si las pausas superan 60 s, aparecerían huecos.
 
-**Pendiente.** Como cambiaron dos variables, falta saber si basta la configuración de HyperOS o si también hace falta el ajuste de visibilidad del WebView.
+**Pendiente.** Como cambiaron dos variables, falta saber si basta la configuración de HyperOS o si también hace falta el ajuste de visibilidad del WebView (D3b).
+
+### D3b · 2026-10-28 · Solo configuración de HyperOS, sin el ajuste de visibilidad: no pasa
+
+**Cambio.** Misma build y configuración del teléfono que D3, con la línea `dispatchWindowVisibilityChanged` comentada. Pantalla apagada de forma continua de 17:01:21 a 17:06:34. Log recuperado del buffer del teléfono.
+
+| Minuto | Entregas del sistema a la app | Entregas al JavaScript | Latido nativo (fondo / principal) |
+|---|---|---|---|
+| 17:01 | — | 8 | 12 / 12 |
+| 17:02 | 56 | 19 | 12 / 12 |
+| 17:03–17:05 | 60 por minuto | 0 | 12 / 12 |
+| 17:06 (al reabrir) | 34 | 262 de una vez | 12 / 12 |
+
+En 17:01 el registro del sistema no identifica las entregas a la app al inicio de la sesión; no cambia la conclusión.
+
+CSV de la sesión `S20261028-170114`: muestras a los 29,6 y 30,1 s, y la siguiente al reabrir con un **intervalo de 260,7 s** (C3 falla).
+
+**Conclusión de D1 a D3b.**
+- El proceso de la app **no se congela**: el latido nativo continúa todo el periodo, con y sin el ajuste.
+- Lo que se suspende es **solo el WebView**, unos 60 s después de pasar a segundo plano, aun con HyperOS configurado (sin restricciones, inicio automático, candado).
+- El ajuste `dispatchWindowVisibilityChanged(VISIBLE)` en `MainActivity.onStop` **es necesario y suficiente** en T1 junto con la configuración recomendada. Se mantiene en la app.
+- No hace falta el módulo nativo (ADR-001) para H-3.
+
+**Siguiente paso.** E2 sin cable (60 min, pantalla apagada, configuración recomendada) con build normal (sin `VITE_DIAGNOSTICO`) como confirmación definitiva. Riesgo a vigilar: el ajuste podría aumentar el consumo de batería al mantener activa la página; se mide en E2.
 
 ## 8. Conclusión y decisión
 

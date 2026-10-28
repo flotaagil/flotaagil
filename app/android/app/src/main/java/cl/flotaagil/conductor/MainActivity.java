@@ -23,7 +23,8 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onStop() {
         super.onStop();
-        // Segundo intento: el WebView sigue tratando su ventana como visible y no suspende la página.
+        // El WebView sigue tratando su ventana como visible y no suspende la página. Sin esto el
+        // JavaScript se detiene ~60 s después de pasar a segundo plano, aun con HyperOS configurado (D3b).
         getBridge().getWebView().dispatchWindowVisibilityChanged(View.VISIBLE);
     }
 
