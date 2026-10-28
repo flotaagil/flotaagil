@@ -136,8 +136,8 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y las primeras entregas no quedaron identificadas en el log.
 
 **Conclusión.**
-- El servicio en primer plano funciona: HyperOS no congeló la app ni cortó el GPS (una entrega por segundo durante todo el periodo).
-- Unos 60 s después de pasar a segundo plano, el WebView deja de ejecutar JavaScript; las posiciones quedan en cola y llegan todas juntas al reabrir. Capacitor no lo pausa (`KeepRunning=true` por defecto); en el log, el proceso de render del WebView baja a prioridad «idle» mientras la app sigue en primer plano por el servicio.
+- El sistema siguió entregando posiciones a la app una vez por segundo durante todo el periodo (registro del sistema, no del proceso de la app; ver D2).
+- Unos 60 s después de pasar a segundo plano dejan de llegar posiciones al JavaScript; quedan en cola y llegan todas juntas al reabrir. Capacitor no pausa el WebView (`KeepRunning=true` por defecto); en el log, el proceso de render del WebView baja a prioridad «idle» mientras la app sigue en primer plano por el servicio.
 - Con este comportamiento C3 falla siempre con pantalla apagada (hueco de ~225 s) y las posiciones atrasadas no sirven para el mapa en tiempo real de HU-02.
 
 **Cierre de la app sin candado (intento previo de E4).** Al deslizar la app fuera de recientes, HyperOS (`SwipeUpClean`) destruyó la actividad y el proceso del WebView, pero no el proceso de la app; el GPS se detuvo porque el plugin vincula su servicio a la actividad. Al reabrir, la app marcó la sesión como interrumpida.
@@ -145,6 +145,21 @@ En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y la
 **Decisión del equipo (2026-10-28).** Se descarta exigir que se siga registrando con la app cerrada. Mitigaciones: candado en recientes (guía al conductor), retomar la sesión automáticamente al reabrir si el turno sigue activo, y el umbral de 60 s de HU-02 en el panel para marcar la posición como no confiable. El único problema por resolver en H-3 es la suspensión del JavaScript con pantalla apagada.
 
 **Siguiente paso.** Probar un ajuste en `MainActivity` (prioridad del proceso de render del WebView) y repetir esta prueba con cable. Si no hay huecos > 60 s, la confirmación definitiva es E2 sin cable (60 min, pantalla apagada); si E2 pasa, se continúa con E3. Si la prueba con cable falla, se evalúa un segundo ajuste del WebView y, si tampoco basta, se propone un módulo nativo reducido (ADR-001), sin reinicio tras cierre ni permiso de ubicación «todo el tiempo».
+
+### D2 · 2026-10-28 · Ajuste de prioridad del proceso de render: no resuelve
+
+**Cambio probado.** `MainActivity` con `WebView.setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false)`, plugin sin cambios. Misma prueba que D1 (modo espera, candado, cable, pantalla apagada). La captura del log se cortó a las 16:27:50 porque el teléfono se desconectó del PC; alcanzó a cubrir 6 min.
+
+| Minuto | Entregas del sistema a la app | Entregas que llegaron al JavaScript |
+|---|---|---|
+| 16:21 | 29 | 29 |
+| 16:22 | 60 | 22 (última a las 16:22:21) |
+| 16:23–16:26 | 60 por minuto | 0 |
+| 16:27 (hasta la desconexión) | 50 | 0 |
+
+**Resultado.** Mismo comportamiento que D1: el JavaScript deja de recibir posiciones unos 50 s después de iniciar con la app en segundo plano. El ajuste no tiene efecto.
+
+**Hallazgo adicional.** Desde las 16:22:21 el proceso de la app no escribe ninguna línea en el log, incluidas las del puente nativo de Capacitor. El log no permite distinguir si se suspende solo el JavaScript (proceso de render del WebView) o el proceso completo de la app pese al servicio en primer plano. La diferencia es decisiva: en el segundo caso un módulo nativo tampoco resolvería el problema.
 
 ## 8. Conclusión y decisión
 
