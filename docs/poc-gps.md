@@ -116,6 +116,36 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 | C5 Precisión p95 ≤ 50 m (propuesta del equipo) | ‹…› | ‹…› |
 | C6 Batería | ‹%/h; proyección a 8 h› | — |
 
+## 7.1 Diagnósticos
+
+### D1 · 2026-10-28 · El JavaScript se suspende con la pantalla apagada (T1)
+
+**Hallazgo previo.** En una sesión de prueba (modo espera, cable conectado) la app dejó de registrar 79 s con la pantalla apagada, aunque el log de Android mostraba que el sistema seguía entregando posiciones al proceso cada 1 s.
+
+**Prueba controlada.** Build de diagnóstico (`VITE_DIAGNOSTICO=1`) que registra en consola cada entrega del plugin que llega al JavaScript; log del teléfono capturado en vivo en el PC. Modo espera, app con candado en recientes, cable conectado, pantalla apagada 5 min sin tocar el teléfono.
+
+| Minuto | Entregas de Android al proceso | Entregas que llegaron al JavaScript |
+|---|---|---|
+| 16:05 | 38 | 62 |
+| 16:06 | 60 | 21 (última a las 16:06:20) |
+| 16:07 | 60 | 0 |
+| 16:08 | 60 | 0 |
+| 16:09 | 60 | 0 |
+| 16:10 (al reabrir) | 3 | 229 de una vez |
+
+En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y las primeras entregas no quedaron identificadas en el log.
+
+**Conclusión.**
+- El servicio en primer plano funciona: HyperOS no congeló la app ni cortó el GPS (una entrega por segundo durante todo el periodo).
+- Unos 60 s después de pasar a segundo plano, el WebView deja de ejecutar JavaScript; las posiciones quedan en cola y llegan todas juntas al reabrir. Capacitor no lo pausa (`KeepRunning=true` por defecto); en el log, el proceso de render del WebView baja a prioridad «idle» mientras la app sigue en primer plano por el servicio.
+- Con este comportamiento C3 falla siempre con pantalla apagada (hueco de ~225 s) y las posiciones atrasadas no sirven para el mapa en tiempo real de HU-02.
+
+**Cierre de la app sin candado (intento previo de E4).** Al deslizar la app fuera de recientes, HyperOS (`SwipeUpClean`) destruyó la actividad y el proceso del WebView, pero no el proceso de la app; el GPS se detuvo porque el plugin vincula su servicio a la actividad. Al reabrir, la app marcó la sesión como interrumpida.
+
+**Decisión del equipo (2026-10-28).** Se descarta exigir que se siga registrando con la app cerrada. Mitigaciones: candado en recientes (guía al conductor), retomar la sesión automáticamente al reabrir si el turno sigue activo, y el umbral de 60 s de HU-02 en el panel para marcar la posición como no confiable. El único problema por resolver en H-3 es la suspensión del JavaScript con pantalla apagada.
+
+**Siguiente paso.** Probar un ajuste en `MainActivity` (prioridad del proceso de render del WebView) y repetir esta prueba. Si no hay huecos > 60 s, se continúa con E2 y E3. Si no, se propone un módulo nativo reducido (ADR-001), sin reinicio tras cierre ni permiso de ubicación «todo el tiempo».
+
 ## 8. Conclusión y decisión
 
 ‹¿Se mantiene el plugin para HU-02, HU-04 y HU-29? ¿Qué ajustes requiere la app real (intervalo nativo, instrucciones de ahorro de batería al conductor, manejo de cierre)? Riesgos que quedan abiertos.›
