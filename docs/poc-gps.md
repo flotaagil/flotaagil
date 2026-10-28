@@ -1,7 +1,7 @@
 # Informe PoC GPS en segundo plano (H-3)
 
 > Plantilla. Los campos marcados con `‹…›` se llenan después de probar en teléfonos reales.
-> Evidencias (CSV exportados) en `docs/evidencias/H-3/`.
+> Evidencias en `docs/evidencias/H-3/`: CSV **anonimizados** con `docs/scripts/anonimizar_poc_gps.py` (sin latitud, longitud, altitud ni rumbo; con distancia desde la posición anterior). Los CSV originales no se suben al repositorio.
 
 | Campo | Valor |
 |---|---|

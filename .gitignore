@@ -5,6 +5,11 @@
 *.pem
 *.key
 
+# ---------- Evidencias con datos personales ----------
+# Solo se versionan CSV anonimizados (docs/scripts/anonimizar_poc_gps.py genera *-anon.csv).
+/docs/evidencias/**/*.csv
+!/docs/evidencias/**/*-anon.csv
+
 # ---------- Python / Django (backend/) ----------
 __pycache__/
 *.py[cod]
