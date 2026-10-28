@@ -39,7 +39,7 @@ Validar que `@capacitor-community/background-geolocation` en Android 10+ entrega
 
 **Decisión de muestreo.** Se usa `distanceFilter: 0` para que el plugin entregue posiciones aunque el teléfono esté quieto (escenario E2); con un filtro por distancia, un conductor detenido no generaría posiciones y C2 y C3 fallarían por diseño y no por el sistema operativo. La app registra solo una posición cada 10 s (modo «En viaje») o 30 s (modo «En espera»), decidiendo en cada entrega del plugin y no con temporizadores, porque estos se ralentizan en segundo plano. Consecuencia: el GPS trabaja a ~1 Hz y la batería medida es el **peor caso**; si C6 resulta alto, la mejora es ajustar el intervalo nativo del plugin (fork o parche) en la app real.
 
-**Datos.** La PoC no envía nada. Por cada posición registrada calcula los bytes del mensaje que enviaría la app real (JSON con hora, lat, lon, precisión, velocidad y rumbo) más una sobrecarga **supuesta** de 80 bytes por mensaje (WebSocket, TLS, TCP/IP), y lo proyecta a 8 h. Se contrasta con la lectura manual de Ajustes → Red → Uso de datos de la app.
+**Datos.** La PoC no envía nada. Por cada posición registrada calcula los bytes del mensaje que enviaría la app real (JSON con hora, lat, lon, precisión, velocidad y rumbo) más una sobrecarga **supuesta** de 80 bytes por mensaje (WebSocket, TLS, TCP/IP), y lo proyecta a 8 h. La lectura de uso de datos en Ajustes de Android **se omite**: la PoC no envía datos, así que no aporta información; la medición real de C4 queda para cuando la app envíe posiciones al backend (HU-02).
 
 **Consentimiento (RN-18).** La app muestra el aviso de uso de ubicación antes de la primera sesión y solo registra mientras hay una sesión iniciada, con notificación fija.
 
@@ -92,7 +92,7 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 | Esc. | Tel. | Sesión | Muestras | Intervalo mediana / p95 / máx (s) | Huecos > 60 s | Precisión mediana / p95 (m) | Batería (%/h) | Datos estimados (MB/h · MB/8 h) | Datos medidos en Ajustes (MB) | Observaciones |
 |---|---|---|---|---|---|---|---|---|---|---|
 | E1 | T1 | ‹S…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› | ‹…› |
-| E2 | T1 | S20261028-171058 | 53 | 30,0 / 33,3 / 34,9 | 0 | 3,4 / 11,9 | 6,8 (3 % en 0,44 h; baja resolución) | 0,020 · 0,16 | ‹pendiente› | **Parcial: 26,6 min de 60.** Pantalla apagada todo el periodo, sin cable. Build con ajuste de visibilidad del WebView (D3b). Evidencia: `evidencias/H-3/E2-*-anon.csv` |
+| E2 | T1 | S20261028-171058 | 53 | 30,0 / 33,3 / 34,9 | 0 | 3,4 / 11,9 | 6,8 (3 % en 0,44 h; baja resolución) | 0,020 · 0,16 | No aplica | **Parcial: 26,6 min de 60** (aceptado como parcial; se repite completo). Pantalla apagada todo el periodo, sin cable. Build con ajuste de visibilidad del WebView (D3b). Evidencia: `evidencias/H-3/E2-*-anon.csv` |
 | E2b | T1 | | | | | | | | | |
 | E3 | T1 | | | | | | | | | |
 | E4 | T1 | | | | | | | | | ‹¿siguió el servicio tras cerrar la app? hueco hasta reabrir› |
@@ -223,7 +223,26 @@ CSV de la sesión `S20261028-170114`: muestras a los 29,6 y 30,1 s, y la siguien
 
 ## 8. Conclusión y decisión
 
-‹¿Se mantiene el plugin para HU-02, HU-04 y HU-29? ¿Qué ajustes requiere la app real (intervalo nativo, instrucciones de ahorro de batería al conductor, manejo de cierre)? Riesgos que quedan abiertos.›
+**Estado: preliminar.** Pendientes E2 completo (60+ min) y E3 (trayecto de 60 min con pantalla apagada).
+
+**Resultados hasta ahora (T1, Xiaomi 14T, HyperOS 3).**
+- Con el ajuste de visibilidad del WebView en `MainActivity` y la configuración recomendada del teléfono, la app registra con pantalla apagada y sin cable sin huecos > 60 s (E2 parcial: 26,6 min, intervalo máx 34,9 s, precisión p95 11,9 m).
+- Sin el ajuste, el JavaScript se suspende unos 60 s después de pasar a segundo plano, aun con HyperOS configurado (D1–D3b). El proceso nativo no se congela.
+- El plugin `@capacitor-community/background-geolocation` 1.2.26 se mantiene; no hace falta un módulo nativo propio (ADR-001) ni Solicitud de cambio.
+
+**Decisiones.**
+- Se descarta exigir que se siga registrando con la app cerrada. Mitigaciones: candado en recientes, retomar la sesión automáticamente al reabrir si el turno sigue activo, y el umbral de 60 s de HU-02 en el panel.
+
+**Riesgos y ajustes para la app real.**
+
+| # | Riesgo o ajuste | Detalle | Dónde se aborda |
+|---|---|---|---|
+| A1 | Consumo de batería | ~6,8 %/h en E2 parcial (≈ 54 % en un turno de 8 h), con el GPS a 1 Hz en alta precisión porque el plugin fija un intervalo nativo de 1000 ms. Medición de baja resolución: confirmar con E2 completo y E3. | HU-02 / HU-13 |
+| A2 | Intervalo nativo del GPS | Bajar el intervalo nativo a 10 s en viaje y 30 s en espera (parche o fork del plugin, o reemplazo del servicio de ubicación), en vez de pedir 1 Hz y descartar en la app. Debería reducir A1 de forma importante; hay que verificar que no aumenten los huecos. | HU-02 / HU-13 |
+| A3 | Ajuste del WebView | `dispatchWindowVisibilityChanged(VISIBLE)` en `MainActivity.onStop` es un ajuste no documentado como uso previsto; puede dejar de funcionar con actualizaciones del WebView. Repetir la prueba de diagnóstico tras actualizar WebView o Capacitor. | Mantenimiento de la app |
+| A4 | Configuración de HyperOS | Sin «Sin restricciones», inicio automático y candado no se probó el comportamiento con el ajuste (E2b). La app real debe guiar al conductor para dejar esa configuración. | HU-13 |
+| A5 | Cierre de la app | Si el conductor la cierra, el registro se detiene (decisión del equipo). Mitigación: retomar al reabrir y umbral de 60 s en el panel. | HU-02 / HU-13 |
+| A6 | Representatividad | Un solo teléfono y fabricante. | Pruebas de aceptación |
 
 ## 9. Limitaciones
 
