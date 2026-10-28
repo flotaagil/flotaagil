@@ -44,4 +44,14 @@ npx cap run android          # instala en el teléfono conectado
 npm run android              # build + sync + abre Android Studio
 ```
 
+En Windows, si la ruta del repositorio tiene espacios, `npx cap run android` falla con «"gradlew" no se reconoce». Alternativa:
+
+```
+npm run build && npx cap sync android
+cd android && gradlew.bat assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+En Xiaomi (HyperOS) hay que activar «Instalar vía USB» en Opciones de desarrollador y aceptar el diálogo de instalación antes de que termine su cuenta regresiva.
+
 Nunca subas keystores (`*.jks`, `*.keystore`) ni `local.properties`.
