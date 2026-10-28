@@ -53,7 +53,8 @@ def anonimizar_posiciones(filas, columnas):
 
 
 def procesar(origen: Path, carpeta: Path, forzar: bool) -> Path:
-    with origen.open(encoding="utf-8", newline="") as f:
+    # utf-8-sig: la app exporta con BOM para Excel.
+    with origen.open(encoding="utf-8-sig", newline="") as f:
         lector = csv.DictReader(f)
         columnas = lector.fieldnames or []
         filas = list(lector)

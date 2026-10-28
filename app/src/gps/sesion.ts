@@ -4,6 +4,9 @@ import { bytesEstimados, debeRegistrar } from './muestreo';
 import { abrirAjustes, detenerRastreo, iniciarRastreo, type CallbackError, type Location } from './rastreo';
 import { INTERVALO_OBJETIVO_S, type Modo, type Muestra, type TipoEvento } from './tipos';
 
+/** Build de diagnóstico (VITE_DIAGNOSTICO=1): registra en consola cada entrega del plugin. */
+const DIAGNOSTICO = import.meta.env.VITE_DIAGNOSTICO === '1';
+
 export interface EstadoVivo {
   sesion: string | null;
   modo: Modo;
@@ -108,6 +111,11 @@ export class Sesion {
     if (!sesion) return;
     this.callbacksPendientes++;
     this.publicar({ callbacks_total: this.estado.callbacks_total + 1 });
+    if (DIAGNOSTICO) {
+      // Aparece en logcat como Capacitor/Console; se compara con las entregas nativas (*location*).
+      console.info(`[H3] entrega=${this.estado.callbacks_total} fix=${posicion.time} `
+        + `visible=${document.visibilityState} plano=${this.segundoPlano ? 'segundo' : 'primero'}`);
+    }
 
     const ahora = Date.now();
     if (!debeRegistrar(this.ultimaMs, ahora, INTERVALO_OBJETIVO_S[modo])) return;

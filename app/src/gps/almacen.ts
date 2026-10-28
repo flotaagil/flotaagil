@@ -18,6 +18,9 @@ const MUESTRAS = `${CARPETA}/posiciones.csv`;
 const EVENTOS = `${CARPETA}/eventos.csv`;
 const ESTADO = `${CARPETA}/estado.json`;
 
+/** Marca de orden de bytes: Excel la necesita para abrir el CSV como UTF-8. */
+const BOM = '\uFEFF';
+
 /** Sesión en curso, para detectar al reabrir la app que se cerró sin detenerla. */
 export interface EstadoSesion {
   sesion: string;
@@ -110,7 +113,7 @@ export async function exportar(): Promise<boolean> {
     await Filesystem.writeFile({
       path: destino,
       directory: Directory.Cache,
-      data: texto,
+      data: `${BOM}${texto}`,
       encoding: Encoding.UTF8,
       recursive: true,
     });
