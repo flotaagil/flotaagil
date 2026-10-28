@@ -124,6 +124,8 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 
 **Prueba controlada.** Build de diagnóstico (`VITE_DIAGNOSTICO=1`) que registra en consola cada entrega del plugin que llega al JavaScript; log del teléfono capturado en vivo en el PC. Modo espera, app con candado en recientes, cable conectado, pantalla apagada 5 min sin tocar el teléfono.
 
+**Observación.** D1 y D2 se hicieron con el ahorro de batería de la app **sin confirmar** (no se registró si estaba en «Inteligente», el valor por defecto, o en «Sin restricciones»), ni el estado de «Inicio automático» y «Pausar actividad si no se utiliza». Sus resultados no deben leerse como comportamiento con la configuración recomendada de la sección 4.1.
+
 | Minuto | Entregas de Android al proceso | Entregas que llegaron al JavaScript |
 |---|---|---|
 | 16:05 | 38 | 62 |
@@ -159,7 +161,30 @@ En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y la
 
 **Resultado.** Mismo comportamiento que D1: el JavaScript deja de recibir posiciones unos 60 s después de pasar a segundo plano. El ajuste no tiene efecto. El CSV de la sesión (`S20261028-162116`) lo confirma: muestras a los 30,3 s y 30,0 s, y la siguiente recién al reabrir la app, con un **intervalo de 348,9 s** (C3 falla).
 
+**Observación.** Igual que D1, con el ahorro de batería de la app sin confirmar.
+
 **Hallazgo adicional.** Desde las 16:22:21 el proceso de la app no escribe ninguna línea en el log, incluidas las del puente nativo de Capacitor. El log no permite distinguir si se suspende solo el JavaScript (proceso de render del WebView) o el proceso completo de la app pese al servicio en primer plano. La diferencia es decisiva: en el segundo caso un módulo nativo tampoco resolvería el problema.
+
+### D3 · 2026-10-28 · Ventana visible para el WebView + latido nativo, con el teléfono configurado
+
+**Configuración del teléfono (confirmada antes de la prueba).**
+
+| Ajuste | Valor |
+|---|---|
+| Ahorro de batería de la app | Sin restricciones |
+| Inicio automático | Activado |
+| Candado en recientes | Puesto |
+| Pausar actividad si no se utiliza | Desactivado |
+| Ahorro de batería del sistema | ‹confirmar› |
+| Cable | Conectado (captura del log) |
+
+**Cambios en la app.**
+- `MainActivity.onStop` informa al WebView que su ventana sigue visible (`dispatchWindowVisibilityChanged(VISIBLE)`), para que no suspenda la página. Se mantiene el ajuste de prioridad de D2.
+- Latido nativo cada 5 s en el log (`H3 latido hilo=fondo` y `hilo=principal`), solo en builds de depuración, para saber si se suspende solo el JavaScript o el proceso completo de la app.
+
+**Variables.** Respecto de D2 cambian dos cosas: la configuración de HyperOS y el ajuste de visibilidad. Si D3 pasa, conviene una prueba corta sin el ajuste de visibilidad para saber cuál de los dos lo resolvió.
+
+**Resultado.** ‹pendiente›
 
 ## 8. Conclusión y decisión
 
