@@ -175,7 +175,7 @@ En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y la
 | Inicio automático | Activado |
 | Candado en recientes | Puesto |
 | Pausar actividad si no se utiliza | Desactivado |
-| Ahorro de batería del sistema | ‹confirmar› |
+| Ahorro de batería del sistema | Desactivado |
 | Cable | Conectado (captura del log) |
 
 **Cambios en la app.**
@@ -184,7 +184,19 @@ En 16:05 el conteo nativo es menor porque la sesión partió a las 16:04:55 y la
 
 **Variables.** Respecto de D2 cambian dos cosas: la configuración de HyperOS y el ajuste de visibilidad. Si D3 pasa, conviene una prueba corta sin el ajuste de visibilidad para saber cuál de los dos lo resolvió.
 
-**Resultado.** ‹pendiente›
+**Resultado: pasa.** Sesión `S20261028-165003`. Pantalla apagada de forma continua de 16:51:18 a 16:55:56 (4 min 38 s; antes hubo dos encendidos breves).
+
+| Medida | Valor |
+|---|---|
+| Latido nativo (fondo / principal) | 12 / 12 por minuto todo el periodo: el proceso de la app no se congeló |
+| Entregas que llegaron al JavaScript | Continuas hasta el final (última 16:56:00) |
+| Muestras con pantalla apagada | 9, intervalos entre 29,9 y 34,8 s |
+| Intervalo máximo de la sesión | 34,8 s (sin huecos > 60 s) |
+| Precisión | 5,8–13,3 m |
+
+**Observación.** Con la pantalla apagada, Android entregó posiciones con menos frecuencia (en algunos tramos 5 a 9 entregas en 30 s, con pausas de hasta 36 s en el registro del sistema), por lo que algunos intervalos llegan a 32–35 s en vez de 30 s. No afecta C3, pero hay que vigilarlo en E2 y E3: si las pausas superan 60 s, aparecerían huecos.
+
+**Pendiente.** Como cambiaron dos variables, falta saber si basta la configuración de HyperOS o si también hace falta el ajuste de visibilidad del WebView.
 
 ## 8. Conclusión y decisión
 
