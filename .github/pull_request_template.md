@@ -1,4 +1,5 @@
 Closes #
+<!-- Usa «Refs #» si este PR no termina la HU (p. ej., el backend de una HU); el PR web la cierra. Borra la línea si es una tarea técnica sin issue. -->
 
 ## Qué cambia
 

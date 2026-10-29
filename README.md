@@ -44,7 +44,7 @@ docs/      informes, decisiones, backlog, evidencias     ambos
 
 1. Toma un issue del tablero y crea una rama desde `main`: `feat/HU-03-reservas`, `fix/HU-16-monto-pago`, `chore/…`, `docs/…`, `test/…`. Una rama por HU o tarea.
 2. Commits en [Conventional Commits](https://www.conventionalcommits.org/es/) en español, con scope del área: `feat(backend): crear modelo VIAJE`. Scopes permitidos: `backend`, `web`, `app`, `infra`, `docs`, `ci`, `deps`.
-3. Abre un PR con el mismo formato en el título y `Closes #<issue>` en la descripción.
+3. Abre un PR con el mismo formato en el título. En la descripción, `Closes #<issue>` si el PR termina la HU (normalmente el PR web) o `Refs #<issue>` si es parcial (p. ej., el backend de la HU). Las tareas técnicas sin issue no llevan ninguno.
 4. El PR necesita el check `ci` en verde y la revisión del otro integrante. Se fusiona con *squash*.
 5. Nunca push directo a `main`: la rama está protegida.
 
