@@ -282,7 +282,9 @@ class TestTopeDeLaSesionDelPanel:
         assert int(respuesta.cookies[COOKIE]["max-age"]) == 1
 
     @pytest.mark.parametrize(
-        "despues", [timedelta(hours=12), timedelta(hours=12, seconds=1), timedelta(hours=13)]
+        "despues",
+        [timedelta(hours=12), timedelta(hours=12, seconds=1), timedelta(hours=13)],
+        ids=["12h", "12h01s", "13h"],
     )
     def test_desde_las_12_horas_responde_sesion_expirada(self, despachador, t0, despues):
         t1 = self.iniciar(despachador, t0)
