@@ -94,3 +94,34 @@ La verificación por WhatsApp está simulada (`apps/integraciones/notificaciones
 | App del conductor | `POST /api/auth/app/token/` → `access` y `refresh` en la respuesta | `POST /api/auth/app/refresh/` con `{"refresh"}` | Conductor |
 
 Access de 15 min y refresh de 12 h (`JWT_ACCESS_MIN`, `JWT_REFRESH_HORAS`). Al quinto intento fallido la cuenta se bloquea `LOGIN_BLOQUEO_MIN` minutos. En desarrollo la web usa el proxy de Vite (`/api` → `localhost:8000`) para quedar en el mismo origen que la cookie.
+
+## Producción detrás de Nginx
+
+En producción hay **exactamente un proxy** delante de Django: Nginx en la instancia EC2, sin balanceador ni CDN. Con esa topología es obligatorio:
+
+```
+DJANGO_NUM_PROXIES=1
+```
+
+y en Nginx:
+
+```nginx
+location /api/ {
+    proxy_pass http://backend:8000;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;   # sobrescribe; lo usa SECURE_PROXY_SSL_HEADER
+}
+```
+
+**Por qué.** El throttling por IP (login y portal) identifica al cliente con `get_ident()` de DRF:
+
+- Con `NUM_PROXIES` vacío, DRF usa el encabezado `X-Forwarded-For` **completo** como identificador. El cliente lo escribe a su gusto, así que cada petición cae en un contador nuevo y los límites (`THROTTLE_LOGIN`, `THROTTLE_PORTAL_*`) no sirven.
+- Con `NUM_PROXIES=1`, DRF toma el **último** elemento de la lista. `$proxy_add_x_forwarded_for` agrega al final `$remote_addr`, la IP de la conexión TCP que recibió Nginx, que el cliente no puede falsificar. Lo que el cliente haya enviado queda a la izquierda y se ignora.
+
+**Condiciones para que sea cierto:**
+
+1. El puerto del backend (Gunicorn/Daphne) **no se publica**: solo es accesible desde la red interna del compose. Si alguien se conecta directo, él mismo escribe el último elemento.
+2. No usar el módulo `real_ip` con `set_real_ip_from` amplio: convertiría `$remote_addr` en un valor del cliente.
+3. No usar `$http_x_forwarded_for` solo: copia lo del cliente sin agregar la IP real.
+4. Si cambia la topología, cambia el número. Con un balanceador delante de Nginx serían 2 proxies; dejar 1 haría que todos los clientes compartan la IP del balanceador, y poner 2 con un solo proxy volvería a tomar un valor del cliente.
