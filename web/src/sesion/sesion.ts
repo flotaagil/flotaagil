@@ -14,7 +14,7 @@
 
 import { auth, leerSesion, leerUsuario, type Usuario } from '../api/auth';
 import { leerCodigo, MENSAJES, mensajeDeError } from '../api/errores';
-import type { Entorno, MensajeSesion } from './entorno';
+import type { Canal, Entorno, MensajeSesion } from './entorno';
 import { crearMarca } from './marca';
 import { crearRenovador, NOMBRE_LOCK, type MotivoSinSesion } from './renovar';
 
@@ -37,7 +37,11 @@ export interface Sesion {
   logout(): Promise<{ confirmado: boolean }>;
   renovarTrasRechazo(): Promise<string | null>;
   descartarAviso(): void;
-  destruir(): void;
+  /**
+   * Abre el canal entre pestañas y escucha el evento `online`; devuelve cómo desconectarse. Se puede volver
+   * a conectar (React StrictMode monta, desmonta y vuelve a montar los efectos en desarrollo).
+   */
+  conectar(): () => void;
 }
 
 function avisoDeMotivo(motivo: MotivoSinSesion): string {
@@ -53,7 +57,8 @@ export function crearSesion(e: Entorno): Sesion {
   const oyentesLimpieza = new Set<() => void>();
   const marca = crearMarca(e.almacen);
   const renovar = crearRenovador(e, marca);
-  const canal = e.crearCanal();
+  let canal: Canal | null = null;
+  let quitarOyenteConexion: (() => void) | null = null;
 
   function fijar(nuevo: EstadoSesion) {
     estado = nuevo;
@@ -108,9 +113,6 @@ export function crearSesion(e: Entorno): Sesion {
       }
     }
   }
-
-  canal?.alRecibir(alRecibir);
-  const quitarOyenteConexion = e.alVolverLaConexion(() => void reintentarLogoutPendiente());
 
   async function arrancar(): Promise<void> {
     fijar({ fase: 'cargando' });
@@ -213,11 +215,18 @@ export function crearSesion(e: Entorno): Sesion {
       if (estado.fase === 'anonima' && estado.aviso) fijar({ fase: 'anonima', aviso: null });
     },
 
-    destruir() {
-      quitarOyenteConexion();
-      canal?.cerrar();
-      oyentes.clear();
-      oyentesLimpieza.clear();
+    conectar() {
+      if (!canal) {
+        canal = e.crearCanal();
+        canal?.alRecibir(alRecibir);
+      }
+      quitarOyenteConexion ??= e.alVolverLaConexion(() => void reintentarLogoutPendiente());
+      return () => {
+        quitarOyenteConexion?.();
+        quitarOyenteConexion = null;
+        canal?.cerrar();
+        canal = null;
+      };
     },
   };
 }

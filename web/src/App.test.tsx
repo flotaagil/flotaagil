@@ -1,10 +1,11 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { StrictMode } from 'react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, type RouteObject } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
 import { MENSAJES } from './api/errores';
-import { crearEntorno, crearLocks, vaciar } from './pruebas/entornoFalso';
+import { crearAlmacen, crearBus, crearEntorno, crearLocks, vaciar } from './pruebas/entornoFalso';
 import { ServidorAuthFalso } from './pruebas/servidorAuthFalso';
 import { crearRutas, pantallasDelPanel, ROLES_PANEL, type Manejo } from './rutas/tabla';
 import { useApi } from './sesion/SesionProvider';
@@ -185,5 +186,35 @@ describe('fin de la sesión', () => {
     await usuario.click(await screen.findByRole('button', { name: 'Cerrar sesión' }));
     expect(await screen.findByText(MENSAJES.logout_no_confirmado)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Correo')).toBeInTheDocument());
+  });
+});
+
+describe('dos pestañas en React StrictMode', () => {
+  it('el logout en una cierra la otra (el canal sobrevive al doble montaje)', async () => {
+    const servidor = new ServidorAuthFalso();
+    servidor.sembrarSesion();
+    const bus = crearBus();
+    const almacen = crearAlmacen();
+    const locks = crearLocks();
+    const rutas = crearRutas();
+    const pestanas = [0, 1].map(() => {
+      const { entorno } = crearEntorno({ servidor, bus, almacen, locks });
+      const contenedor = document.createElement('div');
+      document.body.append(contenedor);
+      const router = createMemoryRouter(rutas, { initialEntries: ['/'] });
+      render(
+        <StrictMode>
+          <App entorno={entorno} rutas={rutas} router={router} />
+        </StrictMode>,
+        { container: contenedor },
+      );
+      return { contenedor, router };
+    });
+    const [uno, dos] = pestanas.map(({ contenedor }) => within(contenedor));
+    expect(await uno.findByText('Hola, Diego Despacho.')).toBeInTheDocument();
+    expect(await dos.findByText('Hola, Diego Despacho.')).toBeInTheDocument();
+    await userEvent.setup().click(uno.getByRole('button', { name: 'Cerrar sesión' }));
+    expect(await dos.findByLabelText('Correo')).toBeInTheDocument();
+    expect(pestanas[1].router.state.location.pathname).toBe('/login');
   });
 });

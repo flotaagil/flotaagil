@@ -19,7 +19,7 @@ export function SesionProvider({ entorno, children }: { entorno: Entorno; childr
     sesion.alLimpiar(() => queryClient.clear());
     return { sesion, api: crearClienteApi(entorno, sesion), queryClient };
   });
-  useEffect(() => () => valor.sesion.destruir(), [valor]);
+  useEffect(() => valor.sesion.conectar(), [valor]);
   return (
     <QueryClientProvider client={valor.queryClient}>
       <Contexto.Provider value={valor}>{children}</Contexto.Provider>

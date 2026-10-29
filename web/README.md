@@ -58,7 +58,7 @@ src/pruebas/    servidor de auth falso y piezas falsas del navegador para Vitest
 
 - Toma el mismo Web Lock que la renovación y avisa a las otras pestañas por BroadcastChannel.
 - La sesión local se limpia de inmediato. Si el servidor confirma con **204**, la sesión queda cerrada.
-- Si no hay confirmación (falla de red o respuesta perdida), se guarda la marca `flotaagil.logout_pendiente` en localStorage y se informa «No se pudo confirmar el cierre de sesión en el servidor». Mientras exista la marca, **ninguna pestaña hace refresh** y el logout se reintenta al cargar y al volver la conexión; la marca se borra con el 204. El backend responde 204 aunque la cookie falte, esté vencida o ya invalidada, así que el reintento es seguro.
+- Si no hay confirmación (falla de red, respuesta perdida o cualquier respuesta distinta de 204, como el 502/500 del proxy con el backend caído), se guarda la marca `flotaagil.logout_pendiente` en localStorage y se informa «No se pudo confirmar el cierre de sesión en el servidor». Mientras exista la marca, **ninguna pestaña hace refresh** y el logout se reintenta al cargar y al volver la conexión; la marca se borra con el 204. El backend responde 204 aunque la cookie falte, esté vencida o ya invalidada, así que el reintento es seguro.
 - **Sin localStorage** (bloqueado por el navegador o en modo privado restrictivo), la marca queda en memoria de la pestaña y se comparte por BroadcastChannel con las pestañas abiertas. **No se garantiza que sobreviva a una recarga**: al recargar, la pestaña no sabe que había un logout pendiente.
 - Un login nuevo con la marca intenta antes el logout pendiente y luego la borra (el login reemplaza la cookie).
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { crearEntorno, crearLocks, crearReloj, vaciar } from '../pruebas/entornoFalso';
 import { ServidorAuthFalso } from '../pruebas/servidorAuthFalso';
-import { crearSesion } from '../sesion/sesion';
+import { crearSesionConectada as crearSesion } from '../pruebas/sesionConectada';
 import { crearClienteApi } from './cliente';
 import { MENSAJES } from './errores';
 

@@ -9,7 +9,8 @@ import { MENSAJES } from '../api/errores';
 import { crearEntorno, crearLocks, crearReloj, vaciar } from '../pruebas/entornoFalso';
 import { ServidorAuthFalso } from '../pruebas/servidorAuthFalso';
 import type { Locks } from './entorno';
-import { crearSesion, type Sesion } from './sesion';
+import { crearSesionConectada as crearSesion } from '../pruebas/sesionConectada';
+import type { Sesion } from './sesion';
 
 const REFRESH = 'POST /api/auth/refresh/';
 

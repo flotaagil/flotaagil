@@ -4,7 +4,8 @@ import { crearAlmacen, crearBus, crearEntorno, crearLocks, vaciar } from '../pru
 import { ServidorAuthFalso } from '../pruebas/servidorAuthFalso';
 import type { Almacen } from './entorno';
 import { CLAVE_LOGOUT_PENDIENTE } from './marca';
-import { crearSesion } from './sesion';
+import { crearSesionConectada as crearSesion } from '../pruebas/sesionConectada';
+import { crearSesion as crearSesionSinConectar } from './sesion';
 
 function preparar(opciones: Partial<Parameters<typeof crearEntorno>[0]> = {}) {
   const servidor = new ServidorAuthFalso();
@@ -269,5 +270,41 @@ describe('aviso a las otras pestañas', () => {
     expect(b.estado()).toEqual({ fase: 'anonima', aviso: null });
     await vaciar();
     expect(a.estado()).toEqual({ fase: 'anonima', aviso: null });
+  });
+});
+
+describe('conexión del canal (React StrictMode)', () => {
+  it('desconectar y volver a conectar mantiene el aviso entre pestañas y el reintento al volver la conexión', async () => {
+    const servidor = new ServidorAuthFalso();
+    const bus = crearBus();
+    const almacen = crearAlmacen();
+    const locks = crearLocks();
+    const a = crearSesion(crearEntorno({ servidor, bus, almacen, locks }).entorno);
+    const entornoB = crearEntorno({ servidor, bus, almacen, locks });
+    const b = crearSesionSinConectar(entornoB.entorno);
+    // Lo que hace StrictMode con el efecto del proveedor: montar, desmontar y volver a montar.
+    const desconectar = b.conectar();
+    desconectar();
+    b.conectar();
+    await a.login('despacho@andes.example', 'clave');
+    await b.iniciar();
+    await a.logout();
+    await vaciar();
+    expect(b.estado()).toEqual({ fase: 'anonima', aviso: null });
+  });
+
+  it('desconectada no escucha el canal ni el evento online', async () => {
+    const servidor = new ServidorAuthFalso();
+    const bus = crearBus();
+    const almacen = crearAlmacen();
+    const a = crearSesion(crearEntorno({ servidor, bus, almacen }).entorno);
+    const entornoB = crearEntorno({ servidor, bus, almacen });
+    const b = crearSesionSinConectar(entornoB.entorno);
+    b.conectar()();
+    await a.login('despacho@andes.example', 'clave');
+    await b.iniciar();
+    await a.logout();
+    await vaciar();
+    expect(b.estado().fase).toBe('autenticada');
   });
 });
