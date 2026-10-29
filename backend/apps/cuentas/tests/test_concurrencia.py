@@ -84,7 +84,8 @@ def test_dos_renovaciones_con_el_mismo_refresh_no_ganan_las_dos(canal, rol, empr
         """Lo que hace la renovación ganadora mientras tiene la fila: rotar T1 y confirmar."""
         try:
             with transaction.atomic():
-                Usuario.objects.select_for_update().get(pk=usuario.pk)
+                # Mismo modo que renovar(): FOR NO KEY UPDATE.
+                Usuario.objects.select_for_update(no_key=True).get(pk=usuario.pk)
                 a_tiene_la_fila.set()
                 soltar_a.wait(TOPE_SEGUNDOS)
                 RefreshToken(t1).blacklist()
@@ -110,9 +111,8 @@ def test_dos_renovaciones_con_el_mismo_refresh_no_ganan_las_dos(canal, rol, empr
         hilo_a.join(TOPE_SEGUNDOS)
         hilo_b.join(TOPE_SEGUNDOS)
 
-    assert b_espero, (
-        f"La renovación B no esperó el bloqueo de la fila (respondió {resultado['b'].status_code})."
-    )
+    estado_b = resultado["b"].status_code if "b" in resultado else "sin respuesta"
+    assert b_espero, f"La renovación B no esperó el bloqueo de la fila (respondió {estado_b})."
     respuesta = resultado["b"]
     assert respuesta.status_code == 401
     assert respuesta.data["code"] == "sesion_invalida"

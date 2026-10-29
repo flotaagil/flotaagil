@@ -125,6 +125,8 @@ def renovar(refresh: str, canal: str) -> Renovacion:
 
     Las renovaciones del mismo usuario quedan en serie con un bloqueo de su fila: dos peticiones con el mismo
     refresh no pueden ganar las dos (simplejwt solo revisa la lista negra con un SELECT antes de escribirla).
+    El bloqueo es FOR NO KEY UPDATE: choca con otra renovación, pero no con las inserciones que solo
+    referencian al usuario por FK (como OutstandingToken), que toman KEY SHARE.
     """
     momento = ahora()
     try:
@@ -147,7 +149,7 @@ def renovar(refresh: str, canal: str) -> Renovacion:
 
     with transaction.atomic():
         usuario = (
-            Usuario.objects.select_for_update(of=("self",))
+            Usuario.objects.select_for_update(of=("self",), no_key=True)
             .select_related("empresa")
             .filter(pk=token.get(api_settings.USER_ID_CLAIM))
             .first()
@@ -169,7 +171,7 @@ def _rotar(token: RefreshToken, momento: datetime, restante: timedelta | None) -
     IMPORTANTE: simplejwt está fijada en 5.5.1 (requirements.txt). Cualquier cambio de versión obliga a
     revisar esta función contra el serializer de la nueva versión.
 
-    Se llama dentro de transaction.atomic() con la fila del usuario bloqueada (select_for_update).
+    Se llama dentro de transaction.atomic() con la fila del usuario bloqueada (select_for_update, no_key).
     """
     try:
         # Mientras esperábamos el bloqueo otra petición pudo rotar este mismo refresh.
