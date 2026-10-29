@@ -99,6 +99,21 @@ Valores tomados del resumen de cada sesión en la app (o de `posiciones.csv`).
 | E5 | T1 | | | | | | | | | |
 | E6 | T1 | | | | | | | | | |
 
+### Sesión de uso normal (S1, no controlada)
+
+Sesión `S20261028-184517` (2026-10-28, 18:45–20:19, 93,9 min, modo espera), con la configuración recomendada y el ajuste de visibilidad del WebView. Uso cotidiano del teléfono: salida desde la casa (bajo techo al iniciar), tramos caminando, un tramo en vehículo, clases; pantalla apagada y encendida según el uso; cable conectado de 19:40 a 19:50 y de 19:54 a 20:08. Evidencia: `evidencias/H-3/S1-*-anon.csv`.
+
+| Medida | Valor |
+|---|---|
+| Muestras | 187 |
+| Intervalo mediana / p95 / máx | 30,0 / 32,4 / 42,7 s |
+| Huecos > 60 s | 0 |
+| Precisión mediana / p95 | 3,4 / 100 m. 12 muestras > 50 m (6,4 %), 11 de ellas en los primeros 9 min (±88 a ±1400 m, inicio bajo techo) |
+| Batería sin cargar | 51 → 42 % en 0,91 h ≈ 9,9 %/h (mezclado con el uso del teléfono; no representa solo a la app) |
+| Datos estimados | 0,020 MB/h · 0,16 MB/8 h |
+
+Aporta evidencia de robustez en uso real (sin huecos en 94 min con movimiento, interiores y uso del teléfono), pero no reemplaza a los escenarios: no prueba C1 (modo viaje) y no aísla la condición de pantalla apagada ni el consumo de la app.
+
 ### Comportamiento al cerrar la app (E4)
 
 - ¿La notificación siguió visible después de deslizar la app? ‹sí/no›
@@ -223,7 +238,7 @@ CSV de la sesión `S20261028-170114`: muestras a los 29,6 y 30,1 s, y la siguien
 
 ## 8. Conclusión y decisión
 
-**Estado: preliminar.** Pendientes E2 completo (60+ min) y E3 (trayecto de 60 min con pantalla apagada).
+**Estado: preliminar.** Pendientes E3 (trayecto de 60 min en modo viaje con pantalla apagada; única prueba de C1) y E2 completo (60+ min). Hay además una sesión de uso normal (S1, 94 min, sin huecos).
 
 **Resultados hasta ahora (T1, Xiaomi 14T, HyperOS 3).**
 - Con el ajuste de visibilidad del WebView en `MainActivity` y la configuración recomendada del teléfono, la app registra con pantalla apagada y sin cable sin huecos > 60 s (E2 parcial: 26,6 min, intervalo máx 34,9 s, precisión p95 11,9 m).
@@ -243,6 +258,7 @@ CSV de la sesión `S20261028-170114`: muestras a los 29,6 y 30,1 s, y la siguien
 | A4 | Configuración de HyperOS | Sin «Sin restricciones», inicio automático y candado no se probó el comportamiento con el ajuste (E2b). La app real debe guiar al conductor para dejar esa configuración. | HU-13 |
 | A5 | Cierre de la app | Si el conductor la cierra, el registro se detiene (decisión del equipo). Mitigación: retomar al reabrir y umbral de 60 s en el panel. | HU-02 / HU-13 |
 | A6 | Representatividad | Un solo teléfono y fabricante. | Pruebas de aceptación |
+| A7 | Posiciones de baja precisión | En S1, al iniciar bajo techo, hubo posiciones de ±88 a ±1400 m durante 9 min (p95 de la sesión: 100 m). La app real debe descartar o marcar las posiciones con precisión > 50 m en vez de mostrarlas en el mapa o usarlas para la geocerca de 150 m. Definir si C5 se evalúa excluyendo el periodo inicial en que el GPS aún no fija la posición. | HU-02 / HU-16 / HU-29 |
 
 ## 9. Limitaciones
 
