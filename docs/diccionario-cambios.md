@@ -27,8 +27,14 @@ Agregados y desvíos de la implementación respecto de [`diccionario-datos.md`](
 | tolerancia_fila_min | SMALLINT | No |  | Tiempo fuera de la geocerca antes de salir de la fila (HU-29) | ≥ 0 | 10 |  |
 | espera_no_presentacion_min | SMALLINT | No |  | Espera en EN_ZONA antes de cancelar por no presentación | ≥ 0 | 15 |  |
 | expiracion_verificacion_min | SMALLINT | No |  | Expiración de PENDIENTE_CONFIRMACION (RN-06) | ≥ 1 | 15 |  |
+| zona_lat_min | NUMERIC(9,6) | No |  | Latitud mínima de la zona de operación | −90 a 90; < `zona_lat_max` | −34.300000 |  |
+| zona_lat_max | NUMERIC(9,6) | No |  | Latitud máxima de la zona de operación | −90 a 90 | −32.920000 |  |
+| zona_lon_min | NUMERIC(9,6) | No |  | Longitud mínima de la zona de operación | −180 a 180; < `zona_lon_max` | −71.720000 |  |
+| zona_lon_max | NUMERIC(9,6) | No |  | Longitud máxima de la zona de operación | −180 a 180 | −69.770000 |  |
 
 Relación: EMPRESA 1:1 CONFIGURACION_EMPRESA. Se crea junto con la empresa con los valores por defecto.
+
+La zona de operación es un rectángulo (lat/lon mínimos y máximos) que valida «Dentro de la RM» en `VIAJE.origen_geo` y acota las coordenadas del geocodificador de desarrollo. Los valores por defecto son un rectángulo **aproximado** que contiene la Región Metropolitana; cada empresa puede ajustarlo.
 
 ## DC-03 · HISTORIAL_ESTADO.actor
 
@@ -54,7 +60,7 @@ No agrega columnas. `origen_geo` y `destino_geo` siguen NOT NULL. Las direccione
 - **Desarrollo:** coordenadas aproximadas y determinísticas por texto (la misma dirección da siempre el mismo punto) dentro del límite de la Región Metropolitana.
 - **Google Geocoding:** se activa cuando existe la API key en la configuración del entorno.
 
-La restricción «Dentro de la RM» de `VIAJE.origen_geo` se valida contra un rectángulo aproximado de la RM, definido como parámetro de configuración (no constante en el código).
+La restricción «Dentro de la RM» de `VIAJE.origen_geo` se valida contra la zona de operación de la empresa (`CONFIGURACION_EMPRESA.zona_*`, ver DC-02), por defecto un rectángulo aproximado de la RM.
 
 ## DC-06 · VUELO
 
