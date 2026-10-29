@@ -1,0 +1,19 @@
+.aviso {
+  margin: 0 0 var(--espacio-3);
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: var(--radio);
+  border: 1px solid;
+  font-size: 0.95rem;
+}
+
+.info {
+  background: var(--info-fondo);
+  border-color: var(--info-borde);
+  color: var(--texto);
+}
+
+.error {
+  background: var(--error-fondo);
+  border-color: var(--error-borde);
+  color: var(--error-texto);
+}

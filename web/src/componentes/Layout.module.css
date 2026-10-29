@@ -1,0 +1,108 @@
+.marco {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas: 'cabecera' 'menu' 'contenido';
+}
+
+.cabecera {
+  grid-area: cabecera;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espacio-2) var(--espacio-3);
+  padding: var(--espacio-2) var(--espacio-4);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.marca {
+  font-weight: 700;
+  color: var(--acento);
+}
+
+.empresa {
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.usuario {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  font-size: 0.9rem;
+}
+
+.salir,
+.botonMenu {
+  min-height: var(--toque);
+  padding: 0 var(--espacio-3);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: transparent;
+  color: var(--texto);
+  font: inherit;
+  cursor: pointer;
+}
+
+.menu {
+  grid-area: menu;
+  display: none;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.menu[data-abierto='true'] {
+  display: block;
+}
+
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: var(--espacio-2);
+}
+
+.menu a {
+  display: flex;
+  align-items: center;
+  min-height: var(--toque);
+  padding: 0 var(--espacio-3);
+  border-radius: var(--radio);
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.menu a[aria-current='page'] {
+  background: var(--acento-suave);
+  color: var(--acento);
+  font-weight: 600;
+}
+
+.contenido {
+  grid-area: contenido;
+  padding: var(--espacio-4);
+  max-width: 72rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Escritorio: menú lateral fijo. */
+@media (min-width: 48rem) {
+  .marco {
+    grid-template-columns: 14rem 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: 'cabecera cabecera' 'menu contenido';
+  }
+
+  .botonMenu {
+    display: none;
+  }
+
+  .menu {
+    display: block;
+    border-bottom: 0;
+    border-right: 1px solid var(--borde);
+  }
+}

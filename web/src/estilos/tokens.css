@@ -1,0 +1,48 @@
+/* Tokens de diseño: sobrio, un solo acento, fuentes del sistema, contraste AA. */
+:root {
+  --fondo: #f6f7f9;
+  --superficie: #ffffff;
+  --texto: #1d2329;
+  --texto-suave: #5b6670;
+  --borde: #d5dbe1;
+  --acento: #0f5c6e;
+  --acento-hover: #0b4855;
+  --acento-suave: #e3f0f3;
+  --sobre-acento: #ffffff;
+  --info-fondo: #eef4fb;
+  --info-borde: #b9cfe8;
+  --error-fondo: #fdecec;
+  --error-borde: #f0b4b4;
+  --error-texto: #8a1c1c;
+  --foco: #1a73e8;
+
+  --radio: 6px;
+  --toque: 44px;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-6: 24px;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #12161a;
+    --superficie: #1b2026;
+    --texto: #e6eaee;
+    --texto-suave: #a3adb7;
+    --borde: #313941;
+    --acento: #5fb3c6;
+    --acento-hover: #7cc4d4;
+    --acento-suave: #1d3a42;
+    --sobre-acento: #0b1a1e;
+    --info-fondo: #1a2735;
+    --info-borde: #2f4a66;
+    --error-fondo: #3a1d1d;
+    --error-borde: #6b3030;
+    --error-texto: #f3b6b6;
+    --foco: #8ab4f8;
+  }
+}
