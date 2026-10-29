@@ -143,6 +143,14 @@ JWT_COOKIE = {
     "secure": env.bool("JWT_COOKIE_SECURE", default=not DEBUG),
 }
 
+# Duración máxima de una sesión del panel desde el login, aunque se renueve.
+# La app del conductor no la tiene.
+JWT_SESION_MAX = timedelta(hours=env.int("JWT_SESION_MAX_HORAS", default=12))
+
+# Orígenes desde los que el navegador puede llamar a login, refresh y logout del panel: comparación exacta
+# con el encabezado Origin o, si falta, con el origen del Referer. Vacío = nadie entra al panel.
+PANEL_ORIGENES = env.list("PANEL_ORIGENES", default=[])
+
 # Bloqueo temporal al llegar a 5 intentos fallidos (USUARIO.intentos_fallidos).
 LOGIN_MAX_INTENTOS = 5
 LOGIN_BLOQUEO = timedelta(minutes=env.int("LOGIN_BLOQUEO_MIN", default=15))
