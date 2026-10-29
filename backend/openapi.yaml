@@ -1,0 +1,256 @@
+openapi: 3.0.3
+info:
+  title: FlotaÁgil API
+  version: 0.1.0
+  description: 'API de FlotaÁgil: panel web, portal del pasajero y app del conductor.'
+paths:
+  /api/auth/app/refresh/:
+    post:
+      operationId: auth_app_refresh_create
+      summary: Renovar los tokens de la app del conductor
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tokens'
+          description: ''
+        '401':
+          description: Sin sesión válida
+  /api/auth/app/token/:
+    post:
+      operationId: auth_app_token_create
+      summary: Iniciar sesión en la app del conductor
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SesionApp'
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      summary: Cerrar sesión del panel
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      summary: Renovar el access del panel con la cookie de refresh
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Access'
+          description: ''
+        '401':
+          description: Sin sesión válida
+  /api/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: Deja el refresh en la cookie httpOnly «refresh_panel».
+      summary: Iniciar sesión en el panel web
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SesionPanel'
+          description: ''
+  /api/auth/yo/:
+    get:
+      operationId: auth_yo_retrieve
+      summary: Usuario de la sesión actual
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioSesion'
+          description: ''
+components:
+  schemas:
+    Access:
+      type: object
+      properties:
+        access:
+          type: string
+      required:
+      - access
+    EmpresaResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        razon_social:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          maxLength: 50
+      required:
+      - id
+      - razon_social
+      - slug
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 120
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+      required:
+      - email
+      - password
+    RefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    RolEnum:
+      enum:
+      - ADMINISTRADOR
+      - DESPACHADOR
+      - CONDUCTOR
+      type: string
+      description: |-
+        * `ADMINISTRADOR` - Administrador
+        * `DESPACHADOR` - Despachador
+        * `CONDUCTOR` - Conductor
+    SesionApp:
+      type: object
+      properties:
+        access:
+          type: string
+        usuario:
+          $ref: '#/components/schemas/UsuarioSesion'
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+      - usuario
+    SesionPanel:
+      type: object
+      properties:
+        access:
+          type: string
+        usuario:
+          $ref: '#/components/schemas/UsuarioSesion'
+      required:
+      - access
+      - usuario
+    Tokens:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    UsuarioSesion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          maxLength: 80
+        email:
+          type: string
+          format: email
+          maxLength: 120
+        rol:
+          $ref: '#/components/schemas/RolEnum'
+        empresa:
+          allOf:
+          - $ref: '#/components/schemas/EmpresaResumen'
+          readOnly: true
+      required:
+      - email
+      - empresa
+      - id
+      - nombre
+      - rol
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

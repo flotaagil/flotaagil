@@ -4,10 +4,10 @@ Agregados y desvíos de la implementación respecto de [`diccionario-datos.md`](
 
 | # | Fecha | Tipo | Tabla | Cambio | Motivo | Estado |
 |---|---|---|---|---|---|---|
-| DC-01 | 2026-10-29 | Agregado | EMPRESA | Columna `slug` | El portal público necesita identificar la empresa en la URL (`/solicitar/<slug>`) | Pendiente |
-| DC-02 | 2026-10-29 | Agregado | CONFIGURACION_EMPRESA (nueva) | Tabla 1:1 con EMPRESA con los parámetros configurables | CLAUDE.md exige que los valores supuestos sean parámetros por empresa, no constantes en el código | Pendiente |
-| DC-03 | 2026-10-29 | Desvío de dominio | HISTORIAL_ESTADO | `actor` agrega `ADMINISTRADOR` | El administrador también puede cambiar estados (p. ej., cancelar); registrarlo como DESPACHADOR falsearía el historial | Pendiente |
-| DC-04 | 2026-10-29 | Agregado técnico | USUARIO | Columnas y tablas del sistema de autenticación de Django | Propias del framework; se usan solo para el admin de mantenimiento interno | Pendiente |
+| DC-01 | 2026-10-29 | Agregado | EMPRESA | Columna `slug` | El portal público necesita identificar la empresa en la URL (`/solicitar/<slug>`) | Implementado (feat/backend-base) |
+| DC-02 | 2026-10-29 | Agregado | CONFIGURACION_EMPRESA (nueva) | Tabla 1:1 con EMPRESA con los parámetros configurables | CLAUDE.md exige que los valores supuestos sean parámetros por empresa, no constantes en el código | Implementado (feat/backend-base) |
+| DC-03 | 2026-10-29 | Desvío de dominio | HISTORIAL_ESTADO | `actor` agrega `ADMINISTRADOR` | El administrador también puede cambiar estados (p. ej., cancelar); registrarlo como DESPACHADOR falsearía el historial | Pendiente (HU-03) |
+| DC-04 | 2026-10-29 | Agregado técnico | USUARIO | Columnas y tablas del sistema de autenticación de Django | Propias del framework; se usan solo para el admin de mantenimiento interno | Implementado (feat/backend-base) |
 | DC-05 | 2026-10-29 | Decisión de diseño | VIAJE | Coordenadas obtenidas con un geocodificador detrás de un adaptador | `origen_geo` y `destino_geo` son NOT NULL y los formularios capturan direcciones en texto | Pendiente |
 | DC-06 | 2026-10-29 | Precisión de uso | VUELO | Solo se crea para viajes `DESDE_AEROPUERTO`; `hora_programada` la informa el pasajero o el despachador | `hora_programada` es la hora de llegada que usan RN-17 y HU-27; HU-26 la valida o corrige | Pendiente |
 
