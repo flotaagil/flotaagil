@@ -27,7 +27,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
+    "django_filters",
     "apps.cuentas",
+    "apps.flota",
+    "apps.convenios",
+    "apps.reservas",
+    "apps.aeropuerto",
+    "apps.auditoria",
 ]
 
 MIDDLEWARE = [
@@ -92,7 +98,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
     "DEFAULT_THROTTLE_RATES": {"login": env("THROTTLE_LOGIN", default="10/min")},
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
+
+# Geocodificador (DC-05): sin clave se usa el de desarrollo (determinístico, sin servicios externos).
+GOOGLE_GEOCODING_API_KEY = env("GOOGLE_GEOCODING_API_KEY", default="")
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=env.int("JWT_ACCESS_MIN", default=15)),
@@ -121,6 +131,12 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "0.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
+    # Nombres estables de los enums en el contrato (y en los tipos TypeScript generados).
+    "ENUM_NAME_OVERRIDES": {
+        "EstadoViajeEnum": "apps.reservas.models.EstadoViaje",
+        "CanalEnum": "apps.reservas.models.Canal",
+        "CanalPanelEnum": ["TELEFONO", "WHATSAPP", "CONVENIO"],
+    },
 }
 
 # Producción (TLS 1.2+ con HSTS en Nginx); se activan por entorno.

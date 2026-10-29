@@ -43,3 +43,26 @@ validar_kebab = RegexValidator(
 def validar_no_vacio(valor: str) -> None:
     if not (valor or "").strip():
         raise ValidationError("No puede estar vacío.", code="vacio")
+
+
+validar_telefono_e164 = RegexValidator(
+    r"^\+[1-9]\d{7,14}$", "Teléfono en formato E.164, p. ej. +56912345678.", code="telefono_e164"
+)
+
+validar_movil_chile = RegexValidator(
+    r"^\+569\d{8}$", "Teléfono móvil chileno en formato E.164: +569XXXXXXXX.", code="movil_chile"
+)
+
+validar_patente = RegexValidator(
+    r"^([A-Z]{2}\d{4}|[A-Z]{4}\d{2})$", "Patente chilena: AB1234 o ABCD12.", code="patente"
+)
+
+# Código IATA de aerolínea (2 caracteres) + número de vuelo, con o sin espacio: LA123, H2 456.
+validar_vuelo_iata = RegexValidator(
+    r"^[A-Z0-9]{2} ?\d{1,4}$", "Número de vuelo IATA, p. ej. LA123 o H2 456.", code="vuelo_iata"
+)
+
+
+def normalizar_telefono(valor: str) -> str:
+    """Quita espacios, guiones y paréntesis: «+56 9 1234-5678» → «+56912345678»."""
+    return "".join(c for c in (valor or "") if c.isdigit() or c == "+")

@@ -1,6 +1,9 @@
-"""Datos sintéticos para desarrollo: empresas ficticias y usuarios por rol.
+"""Datos sintéticos para desarrollo: empresas ficticias, usuarios por rol, flota, pasajeros, un convenio y
+viajes en todos los estados.
 
-Idempotente: si los datos ya existen, no los duplica. Solo corre con DEBUG activado.
+Idempotente: si los datos ya existen, no los duplica. Solo corre con DEBUG activado. Para empezar de cero se
+borra la base de datos (`docker compose -f infra/docker-compose.dev.yml down -v`): AUDITORIA es de solo
+inserción y no permite borrar los usuarios que la referencian.
 Los correos usan el dominio reservado .example (RFC 2606) y los RUT son ficticios con dígito válido.
 """
 
@@ -12,6 +15,8 @@ from django.db import transaction
 
 from apps.comun.validadores import digito_verificador
 from apps.cuentas.models import Empresa, Plan, Rol, Usuario
+from apps.flota import demo as demo_flota
+from apps.reservas import demo as demo_reservas
 
 SEMILLA = 2026
 
@@ -40,19 +45,16 @@ def email_demo(slug: str, alias: str) -> str:
 
 
 class Command(BaseCommand):
-    help = "Carga datos sintéticos de desarrollo (empresas y usuarios por rol)."
+    help = "Carga datos sintéticos de desarrollo (empresas, usuarios, flota, convenio y viajes)."
 
     def add_arguments(self, parser):
         parser.add_argument(
             "--password",
             default=os.environ.get("DATOS_DEMO_PASSWORD"),
-            help="Contraseña de los usuarios demo (por defecto, DATOS_DEMO_PASSWORD).",
-        )
-        parser.add_argument(
-            "--reiniciar", action="store_true", help="Borra los datos demo antes de cargarlos."
+            help="Contraseña de los usuarios y del convenio demo (por defecto, DATOS_DEMO_PASSWORD).",
         )
 
-    def handle(self, *args, password, reiniciar, **opciones):
+    def handle(self, *args, password, **opciones):
         if not settings.DEBUG:
             raise CommandError("datos_demo solo corre con DJANGO_DEBUG=true.")
         if not password:
@@ -60,15 +62,11 @@ class Command(BaseCommand):
         # Faker viene con las dependencias de desarrollo (factory-boy); no se instala en producción.
         from faker import Faker
 
-        slugs = [e["slug"] for e in EMPRESAS]
+        faker = Faker("es_CL")
+        faker.seed_instance(SEMILLA)
+        usuarios_creados = viajes_creados = 0
         with transaction.atomic():
-            if reiniciar:
-                Usuario.objects.filter(empresa__slug__in=slugs).delete()
-                Empresa.objects.filter(slug__in=slugs).delete()
-            faker = Faker("es_CL")
-            faker.seed_instance(SEMILLA)
-            creados = 0
-            for datos in EMPRESAS:
+            for numero, datos in enumerate(EMPRESAS):
                 empresa, _ = Empresa.objects.get_or_create(
                     slug=datos["slug"],
                     defaults={
@@ -77,15 +75,26 @@ class Command(BaseCommand):
                         "plan": datos["plan"],
                     },
                 )
+                conductores = []
                 for rol, alias in USUARIOS_POR_EMPRESA:
                     nombre = faker.name()
                     email = email_demo(empresa.slug, alias)
-                    if Usuario.objects.filter(email=email).exists():
-                        continue
-                    Usuario.objects.create_user(email, password, empresa=empresa, nombre=nombre, rol=rol)
-                    creados += 1
+                    usuario = Usuario.objects.filter(email=email).first()
+                    if usuario is None:
+                        usuario = Usuario.objects.create_user(
+                            email, password, empresa=empresa, nombre=nombre, rol=rol
+                        )
+                        usuarios_creados += 1
+                    if rol == Rol.CONDUCTOR:
+                        conductores.append(usuario)
+                perfiles = demo_flota.cargar(empresa, numero, conductores)
+                viajes_creados += demo_reservas.cargar(empresa, numero, perfiles, faker, password)
 
-        self.stdout.write(self.style.SUCCESS(f"Datos demo listos ({creados} usuarios nuevos)."))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Datos demo listos ({usuarios_creados} usuarios y {viajes_creados} viajes nuevos)."
+            )
+        )
         for datos in EMPRESAS:
             self.stdout.write(f"  {datos['razon_social']}  →  /solicitar/{datos['slug']}")
             for rol, alias in USUARIOS_POR_EMPRESA:

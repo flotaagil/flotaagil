@@ -6,11 +6,13 @@ Agregados y desvíos de la implementación respecto de [`diccionario-datos.md`](
 |---|---|---|---|---|---|---|
 | DC-01 | 2026-10-29 | Agregado | EMPRESA | Columna `slug` | El portal público necesita identificar la empresa en la URL (`/solicitar/<slug>`) | Implementado (feat/backend-base) |
 | DC-02 | 2026-10-29 | Agregado | CONFIGURACION_EMPRESA (nueva) | Tabla 1:1 con EMPRESA con los parámetros configurables | CLAUDE.md exige que los valores supuestos sean parámetros por empresa, no constantes en el código | Implementado (feat/backend-base) |
-| DC-03 | 2026-10-29 | Desvío de dominio | HISTORIAL_ESTADO | `actor` agrega `ADMINISTRADOR` | El administrador también puede cambiar estados (p. ej., cancelar); registrarlo como DESPACHADOR falsearía el historial | Pendiente (HU-03) |
+| DC-03 | 2026-10-29 | Desvío de dominio | HISTORIAL_ESTADO | `actor` agrega `ADMINISTRADOR` | El administrador también puede cambiar estados (p. ej., cancelar); registrarlo como DESPACHADOR falsearía el historial | Implementado (feat/HU-03-reservas) |
 | DC-04 | 2026-10-29 | Agregado técnico | USUARIO | Columnas y tablas del sistema de autenticación de Django | Propias del framework; se usan solo para el admin de mantenimiento interno | Implementado (feat/backend-base) |
-| DC-05 | 2026-10-29 | Decisión de diseño | VIAJE | Coordenadas obtenidas con un geocodificador detrás de un adaptador | `origen_geo` y `destino_geo` son NOT NULL y los formularios capturan direcciones en texto | Pendiente |
-| DC-06 | 2026-10-29 | Precisión de uso | VUELO | Solo se crea para viajes `DESDE_AEROPUERTO`; `hora_programada` la informa el pasajero o el despachador | `hora_programada` es la hora de llegada que usan RN-17 y HU-27; HU-26 la valida o corrige | Pendiente |
+| DC-05 | 2026-10-29 | Decisión de diseño | VIAJE | Coordenadas obtenidas con un geocodificador detrás de un adaptador | `origen_geo` y `destino_geo` son NOT NULL y los formularios capturan direcciones en texto | Implementado (feat/HU-03-reservas) |
+| DC-06 | 2026-10-29 | Precisión de uso | VUELO | Solo se crea para viajes `DESDE_AEROPUERTO`; `hora_programada` la informa el pasajero o el despachador | `hora_programada` es la hora de llegada que usan RN-17 y HU-27; HU-26 la valida o corrige | Implementado en el panel (feat/HU-03-reservas); portal en HU-19 |
 | DC-07 | 2026-10-29 | Supuesto | USUARIO | Duración del bloqueo tras 5 intentos fallidos: 15 min, configurable (`LOGIN_BLOQUEO_MIN`) | El Anexo D define el bloqueo al llegar a 5 intentos, pero no su duración | Implementado (feat/backend-base) |
+| DC-08 | 2026-10-29 | Precisión de uso | VIAJE | `origen_cancelacion = DESPACHADOR` para cualquier usuario del panel (despachador o administrador) | El dominio de `origen_cancelacion` no incluye ADMINISTRADOR; el usuario exacto queda en HISTORIAL_ESTADO y AUDITORIA | Implementado (feat/HU-03-reservas) — por confirmar |
+| DC-09 | 2026-10-29 | Corrección de tipo | VIAJE, HISTORIAL_ESTADO | `estado`, `estado_anterior` y `estado_nuevo` pasan de VARCHAR(20) a VARCHAR(22) | `PENDIENTE_CONFIRMACION` tiene 22 caracteres y no cabe en VARCHAR(20) | Implementado (feat/HU-03-reservas) |
 
 ## DC-01 · EMPRESA.slug
 

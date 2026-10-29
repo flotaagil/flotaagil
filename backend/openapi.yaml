@@ -131,6 +131,269 @@ paths:
               schema:
                 $ref: '#/components/schemas/UsuarioSesion'
           description: ''
+  /api/viajes/:
+    get:
+      operationId: viajes_list
+      description: |-
+        RN-13: el queryset se limita a la empresa del usuario y los registros nuevos se asignan a ella.
+
+        Un registro de otra empresa no existe para el usuario: el detalle responde 404 y no 403,
+        para no revelar que existe. `campo_empresa` permite filtrar por una relación
+        (p. ej. "usuario__empresa").
+      summary: Listar reservas
+      parameters:
+      - in: query
+        name: canal
+        schema:
+          type: string
+          enum:
+          - CONVENIO
+          - TELEFONO
+          - WEB
+          - WHATSAPP
+        description: |-
+          * `WEB` - Portal web
+          * `WHATSAPP` - WhatsApp
+          * `TELEFONO` - Teléfono
+          * `CONVENIO` - Convenio
+      - in: query
+        name: desde
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: estado
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - ACEPTADO
+            - ASIGNADO
+            - CANCELADO
+            - EN_CAMINO
+            - EN_ZONA
+            - FINALIZADO
+            - PASAJERO_A_BORDO
+            - PENDIENTE_CONFIRMACION
+            - SOLICITADO
+        description: |-
+          Repetible: ?estado=A&estado=B
+
+          * `PENDIENTE_CONFIRMACION` - Pendiente de confirmación
+          * `SOLICITADO` - Solicitado
+          * `ASIGNADO` - Asignado
+          * `ACEPTADO` - Aceptado
+          * `EN_CAMINO` - En camino
+          * `EN_ZONA` - En zona
+          * `PASAJERO_A_BORDO` - Pasajero a bordo
+          * `FINALIZADO` - Finalizado
+          * `CANCELADO` - Cancelado
+        explode: true
+        style: form
+      - in: query
+        name: fecha
+        schema:
+          type: string
+          format: date
+        description: Día de recogida
+      - in: query
+        name: hasta
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: ordenar
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - -creado_en
+            - -recogida_en
+            - creado_en
+            - recogida_en
+        description: |-
+          Ordenamiento
+
+          * `recogida_en` - Recogida en
+          * `-recogida_en` - Recogida en (descendente)
+          * `creado_en` - Creado en
+          * `-creado_en` - Creado en (descendente)
+        explode: false
+        style: form
+      - name: page
+        required: false
+        in: query
+        description: Un número de página dentro del conjunto de resultados paginado.
+        schema:
+          type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Pasajero, teléfono, dirección o número de vuelo
+      - in: query
+        name: sentido
+        schema:
+          type: string
+          enum:
+          - DESDE_AEROPUERTO
+          - HACIA_AEROPUERTO
+          - URBANO
+        description: |-
+          * `DESDE_AEROPUERTO` - Desde el aeropuerto
+          * `HACIA_AEROPUERTO` - Hacia el aeropuerto
+          * `URBANO` - Urbano
+      tags:
+      - reservas
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedViajeList'
+          description: ''
+    post:
+      operationId: viajes_create
+      description: Queda en SOLICITADO. El vuelo solo se acepta en viajes desde el
+        aeropuerto.
+      summary: Ingresar una reserva
+      tags:
+      - reservas
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ViajeCrearRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ViajeCrearRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ViajeCrearRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViajeDetalle'
+          description: ''
+  /api/viajes/{id}/:
+    get:
+      operationId: viajes_retrieve
+      description: |-
+        RN-13: el queryset se limita a la empresa del usuario y los registros nuevos se asignan a ella.
+
+        Un registro de otra empresa no existe para el usuario: el detalle responde 404 y no 403,
+        para no revelar que existe. `campo_empresa` permite filtrar por una relación
+        (p. ej. "usuario__empresa").
+      summary: Detalle de una reserva con su historial
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este viaje.
+        required: true
+      tags:
+      - reservas
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViajeDetalle'
+          description: ''
+    patch:
+      operationId: viajes_partial_update
+      description: |-
+        RN-13: el queryset se limita a la empresa del usuario y los registros nuevos se asignan a ella.
+
+        Un registro de otra empresa no existe para el usuario: el detalle responde 404 y no 403,
+        para no revelar que existe. `campo_empresa` permite filtrar por una relación
+        (p. ej. "usuario__empresa").
+      summary: Editar una reserva antes del despacho
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este viaje.
+        required: true
+      tags:
+      - reservas
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedViajeEditarRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedViajeEditarRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedViajeEditarRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViajeDetalle'
+          description: ''
+        '409':
+          description: La reserva no admite la operación en su estado actual
+  /api/viajes/{id}/cancelar/:
+    post:
+      operationId: viajes_cancelar_create
+      description: |-
+        RN-13: el queryset se limita a la empresa del usuario y los registros nuevos se asignan a ella.
+
+        Un registro de otra empresa no existe para el usuario: el detalle responde 404 y no 403,
+        para no revelar que existe. `campo_empresa` permite filtrar por una relación
+        (p. ej. "usuario__empresa").
+      summary: Cancelar una reserva con motivo
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: Un valor de entero único que identifique este viaje.
+        required: true
+      tags:
+      - reservas
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelarRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CancelarRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CancelarRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViajeDetalle'
+          description: ''
+        '409':
+          description: La reserva no admite la operación en su estado actual
 components:
   schemas:
     Access:
@@ -140,6 +403,74 @@ components:
           type: string
       required:
       - access
+    ActorEnum:
+      enum:
+      - CONDUCTOR
+      - DESPACHADOR
+      - ADMINISTRADOR
+      - PASAJERO
+      - SISTEMA
+      type: string
+      description: |-
+        * `CONDUCTOR` - Conductor
+        * `DESPACHADOR` - Despachador
+        * `ADMINISTRADOR` - Administrador
+        * `PASAJERO` - Pasajero
+        * `SISTEMA` - Sistema
+    BlankEnum:
+      enum:
+      - ''
+    CanalEnum:
+      enum:
+      - WEB
+      - WHATSAPP
+      - TELEFONO
+      - CONVENIO
+      type: string
+      description: |-
+        * `WEB` - Portal web
+        * `WHATSAPP` - WhatsApp
+        * `TELEFONO` - Teléfono
+        * `CONVENIO` - Convenio
+    CanalPanelEnum:
+      enum:
+      - TELEFONO
+      - WHATSAPP
+      - CONVENIO
+      type: string
+      description: |-
+        * `TELEFONO` - TELEFONO
+        * `WHATSAPP` - WHATSAPP
+        * `CONVENIO` - CONVENIO
+    CancelarRequest:
+      type: object
+      properties:
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 200
+      required:
+      - motivo
+    ConductorResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+      required:
+      - id
+      - nombre
+    ConvenioResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+        cliente_nombre:
+          type: string
+      required:
+      - cliente_nombre
+      - id
     EmpresaResumen:
       type: object
       properties:
@@ -157,6 +488,67 @@ components:
       - id
       - razon_social
       - slug
+    EstadoViajeEnum:
+      enum:
+      - PENDIENTE_CONFIRMACION
+      - SOLICITADO
+      - ASIGNADO
+      - ACEPTADO
+      - EN_CAMINO
+      - EN_ZONA
+      - PASAJERO_A_BORDO
+      - FINALIZADO
+      - CANCELADO
+      type: string
+      description: |-
+        * `PENDIENTE_CONFIRMACION` - Pendiente de confirmación
+        * `SOLICITADO` - Solicitado
+        * `ASIGNADO` - Asignado
+        * `ACEPTADO` - Aceptado
+        * `EN_CAMINO` - En camino
+        * `EN_ZONA` - En zona
+        * `PASAJERO_A_BORDO` - Pasajero a bordo
+        * `FINALIZADO` - Finalizado
+        * `CANCELADO` - Cancelado
+    EstadoVueloEnum:
+      enum:
+      - PROGRAMADO
+      - DEMORADO
+      - ATERRIZADO
+      - CANCELADO
+      - DESVIADO
+      type: string
+      description: |-
+        * `PROGRAMADO` - Programado
+        * `DEMORADO` - Demorado
+        * `ATERRIZADO` - Aterrizado
+        * `CANCELADO` - Cancelado
+        * `DESVIADO` - Desviado
+    Historial:
+      type: object
+      properties:
+        estado_anterior:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/EstadoViajeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        estado_nuevo:
+          $ref: '#/components/schemas/EstadoViajeEnum'
+        actor:
+          $ref: '#/components/schemas/ActorEnum'
+        usuario:
+          type: string
+          readOnly: true
+        creado_en:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - actor
+      - creado_en
+      - estado_nuevo
+      - usuario
     LoginRequest:
       type: object
       properties:
@@ -173,6 +565,96 @@ components:
       required:
       - email
       - password
+    NullEnum:
+      enum:
+      - null
+    OrigenCancelacionEnum:
+      enum:
+      - PASAJERO
+      - DESPACHADOR
+      - SUPERVISOR
+      - SISTEMA
+      type: string
+      description: |-
+        * `PASAJERO` - Pasajero
+        * `DESPACHADOR` - Despachador
+        * `SUPERVISOR` - Supervisor de convenio
+        * `SISTEMA` - Sistema
+    PaginatedViajeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Viaje'
+    PasajeroEntradaRequest:
+      type: object
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 80
+        telefono:
+          type: string
+          minLength: 1
+          description: WhatsApp en formato E.164, p. ej. +56912345678.
+          maxLength: 24
+      required:
+      - nombre
+      - telefono
+    PasajeroResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        telefono:
+          type: string
+      required:
+      - id
+      - nombre
+      - telefono
+    PatchedViajeEditarRequest:
+      type: object
+      properties:
+        sentido:
+          $ref: '#/components/schemas/SentidoEnum'
+        origen_dir:
+          type: string
+          minLength: 1
+          maxLength: 200
+        destino_dir:
+          type: string
+          minLength: 1
+          maxLength: 200
+        recogida_en:
+          type: string
+          format: date-time
+        tarifa:
+          type: integer
+          minimum: 0
+          nullable: true
+        vuelo:
+          allOf:
+          - $ref: '#/components/schemas/VueloEntradaRequest'
+          nullable: true
     RefreshRequest:
       type: object
       properties:
@@ -191,6 +673,16 @@ components:
         * `ADMINISTRADOR` - Administrador
         * `DESPACHADOR` - Despachador
         * `CONDUCTOR` - Conductor
+    SentidoEnum:
+      enum:
+      - DESDE_AEROPUERTO
+      - HACIA_AEROPUERTO
+      - URBANO
+      type: string
+      description: |-
+        * `DESDE_AEROPUERTO` - Desde el aeropuerto
+        * `HACIA_AEROPUERTO` - Hacia el aeropuerto
+        * `URBANO` - Urbano
     SesionApp:
       type: object
       properties:
@@ -224,6 +716,21 @@ components:
       required:
       - access
       - refresh
+    Ubicacion:
+      type: object
+      properties:
+        direccion:
+          type: string
+        lat:
+          type: number
+          format: double
+        lon:
+          type: number
+          format: double
+      required:
+      - direccion
+      - lat
+      - lon
     UsuarioSesion:
       type: object
       properties:
@@ -249,6 +756,262 @@ components:
       - id
       - nombre
       - rol
+    VehiculoResumen:
+      type: object
+      properties:
+        id:
+          type: integer
+        patente:
+          type: string
+      required:
+      - id
+      - patente
+    Viaje:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        estado:
+          $ref: '#/components/schemas/EstadoViajeEnum'
+        canal:
+          $ref: '#/components/schemas/CanalEnum'
+        sentido:
+          $ref: '#/components/schemas/SentidoEnum'
+        pasajero:
+          $ref: '#/components/schemas/PasajeroResumen'
+        origen:
+          allOf:
+          - $ref: '#/components/schemas/Ubicacion'
+          readOnly: true
+        destino:
+          allOf:
+          - $ref: '#/components/schemas/Ubicacion'
+          readOnly: true
+        recogida_en:
+          type: string
+          format: date-time
+        tarifa:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        conductor:
+          allOf:
+          - $ref: '#/components/schemas/ConductorResumen'
+          nullable: true
+        vehiculo:
+          allOf:
+          - $ref: '#/components/schemas/VehiculoResumen'
+          nullable: true
+        convenio:
+          allOf:
+          - $ref: '#/components/schemas/ConvenioResumen'
+          nullable: true
+        vuelo:
+          allOf:
+          - $ref: '#/components/schemas/Vuelo'
+          nullable: true
+          readOnly: true
+        motivo_cancelacion:
+          type: string
+          nullable: true
+          maxLength: 200
+        origen_cancelacion:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/OrigenCancelacionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        creado_en:
+          type: string
+          format: date-time
+          readOnly: true
+        editable:
+          type: boolean
+          readOnly: true
+        cancelable:
+          type: boolean
+          readOnly: true
+      required:
+      - canal
+      - cancelable
+      - conductor
+      - convenio
+      - creado_en
+      - destino
+      - editable
+      - id
+      - origen
+      - pasajero
+      - recogida_en
+      - vehiculo
+      - vuelo
+    ViajeCrearRequest:
+      type: object
+      properties:
+        pasajero:
+          $ref: '#/components/schemas/PasajeroEntradaRequest'
+        canal:
+          allOf:
+          - $ref: '#/components/schemas/CanalPanelEnum'
+          default: TELEFONO
+        convenio:
+          type: integer
+          nullable: true
+        sentido:
+          allOf:
+          - $ref: '#/components/schemas/SentidoEnum'
+          default: URBANO
+        origen_dir:
+          type: string
+          minLength: 1
+          maxLength: 200
+        destino_dir:
+          type: string
+          minLength: 1
+          maxLength: 200
+        recogida_en:
+          type: string
+          format: date-time
+        tarifa:
+          type: integer
+          minimum: 0
+          nullable: true
+        vuelo:
+          allOf:
+          - $ref: '#/components/schemas/VueloEntradaRequest'
+          nullable: true
+      required:
+      - destino_dir
+      - origen_dir
+      - pasajero
+      - recogida_en
+    ViajeDetalle:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        estado:
+          $ref: '#/components/schemas/EstadoViajeEnum'
+        canal:
+          $ref: '#/components/schemas/CanalEnum'
+        sentido:
+          $ref: '#/components/schemas/SentidoEnum'
+        pasajero:
+          $ref: '#/components/schemas/PasajeroResumen'
+        origen:
+          allOf:
+          - $ref: '#/components/schemas/Ubicacion'
+          readOnly: true
+        destino:
+          allOf:
+          - $ref: '#/components/schemas/Ubicacion'
+          readOnly: true
+        recogida_en:
+          type: string
+          format: date-time
+        tarifa:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+        conductor:
+          allOf:
+          - $ref: '#/components/schemas/ConductorResumen'
+          nullable: true
+        vehiculo:
+          allOf:
+          - $ref: '#/components/schemas/VehiculoResumen'
+          nullable: true
+        convenio:
+          allOf:
+          - $ref: '#/components/schemas/ConvenioResumen'
+          nullable: true
+        vuelo:
+          allOf:
+          - $ref: '#/components/schemas/Vuelo'
+          nullable: true
+          readOnly: true
+        motivo_cancelacion:
+          type: string
+          nullable: true
+          maxLength: 200
+        origen_cancelacion:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/OrigenCancelacionEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        creado_en:
+          type: string
+          format: date-time
+          readOnly: true
+        editable:
+          type: boolean
+          readOnly: true
+        cancelable:
+          type: boolean
+          readOnly: true
+        historial:
+          type: array
+          items:
+            $ref: '#/components/schemas/Historial'
+          readOnly: true
+      required:
+      - canal
+      - cancelable
+      - conductor
+      - convenio
+      - creado_en
+      - destino
+      - editable
+      - historial
+      - id
+      - origen
+      - pasajero
+      - recogida_en
+      - vehiculo
+      - vuelo
+    Vuelo:
+      type: object
+      properties:
+        numero:
+          type: string
+          pattern: ^[A-Z0-9]{2} ?\d{1,4}$
+          maxLength: 8
+        fecha:
+          type: string
+          format: date
+        hora_programada:
+          type: string
+          format: date-time
+        hora_estimada:
+          type: string
+          format: date-time
+          nullable: true
+        estado_vuelo:
+          $ref: '#/components/schemas/EstadoVueloEnum'
+      required:
+      - fecha
+      - hora_programada
+      - numero
+    VueloEntradaRequest:
+      type: object
+      properties:
+        numero:
+          type: string
+          minLength: 1
+          description: Código IATA, p. ej. LA123 o H2 456.
+          maxLength: 8
+        hora_programada:
+          type: string
+          format: date-time
+          description: Hora programada de llegada.
+      required:
+      - hora_programada
+      - numero
   securitySchemes:
     jwtAuth:
       type: http

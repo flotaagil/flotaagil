@@ -11,7 +11,8 @@ extend-exclude = ["*/migrations/*", ".venv"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "DJ", "SIM", "RUF"]
 # RUF012 choca con el estilo de Django (Meta.fields, list_display, permission_classes como listas de clase).
-ignore = ["RUF012"]
+# DJ001: el Anexo D define columnas VARCHAR que aceptan NULL (p. ej. motivo, estado_anterior).
+ignore = ["RUF012", "DJ001"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["apps", "config"]

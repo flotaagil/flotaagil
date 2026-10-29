@@ -18,6 +18,12 @@ Pruebas: pytest + pytest-django + coverage (≥ 70 % en módulos de negocio), Ru
 config/            settings (todo por variables de entorno), urls, asgi, wsgi
 apps/comun/        validadores (RUT, kebab-case), permisos por rol, aislamiento por empresa (RN-13)
 apps/cuentas/      EMPRESA, CONFIGURACION_EMPRESA, USUARIO; autenticación JWT; datos_demo
+apps/flota/        CONDUCTOR, VEHICULO, CONDUCTOR_VEHICULO
+apps/convenios/    CONVENIO
+apps/reservas/     PASAJERO, VIAJE, HISTORIAL_ESTADO; máquina de estados; API de reservas (HU-03)
+apps/aeropuerto/   VUELO
+apps/auditoria/    AUDITORIA (solo inserción, protegida también con un trigger en la base)
+apps/integraciones/  geocodificador (desarrollo determinístico o Google Geocoding)
 openapi.yaml       esquema OpenAPI generado (contrato de la API)
 ```
 
@@ -50,6 +56,22 @@ Comandos frecuentes (prefijo `docker compose -f infra/docker-compose.dev.yml`):
 | Detener | `down` (agrega `-v` para borrar la base de datos) |
 
 El `.venv` local (`py -3.12 -m venv backend\.venv` + `pip install -r backend\requirements-dev.txt`) es solo para el editor; no hace falta GDAL en Windows.
+
+`datos_demo` es idempotente. Para volver a cargar todo desde cero hay que borrar la base (`down -v` y `up -d`): AUDITORIA es de solo inserción y no permite borrar los usuarios que la referencian.
+
+## Reservas (HU-03)
+
+Solo administrador y despachador, y solo viajes de su empresa (RN-13).
+
+| Operación | Endpoint | Notas |
+|---|---|---|
+| Listar | `GET /api/viajes/` | Filtros: `estado` (repetible), `fecha` (día local), `desde`/`hasta`, `sentido`, `canal`, `q` (pasajero, teléfono, dirección, vuelo), `ordenar` |
+| Ingresar | `POST /api/viajes/` | Queda en SOLICITADO. Vuelo solo si el sentido es DESDE_AEROPUERTO. Origen dentro de la zona de operación |
+| Ver | `GET /api/viajes/{id}/` | Incluye el historial de estados |
+| Editar | `PATCH /api/viajes/{id}/` | Solo en PENDIENTE_CONFIRMACION o SOLICITADO; si no, 409 |
+| Cancelar | `POST /api/viajes/{id}/cancelar/` | Exige `motivo`; registra HISTORIAL_ESTADO y AUDITORIA; desde estados no cancelables, 409 |
+
+Las transiciones de estado están en `apps/reservas/estados.py`, que es el único lugar que cambia `VIAJE.estado`.
 
 ## Autenticación
 
