@@ -73,6 +73,19 @@ Solo administrador y despachador, y solo viajes de su empresa (RN-13).
 
 Las transiciones de estado están en `apps/reservas/estados.py`, que es el único lugar que cambia `VIAJE.estado`.
 
+## Portal público (HU-19)
+
+Sin autenticación. La empresa se identifica por su `slug` (DC-01).
+
+| Operación | Endpoint | Notas |
+|---|---|---|
+| Datos de la empresa | `GET /api/portal/{slug}/` | Razón social, anticipación mínima y plazo de verificación; 404 si no existe o está inactiva |
+| Solicitar viaje | `POST /api/portal/{slug}/solicitudes/` | Queda en PENDIENTE_CONFIRMACION; responde `expira_en` |
+
+Protección: throttling por IP (`THROTTLE_PORTAL_MINUTO`, `THROTTLE_PORTAL_HORA`; caché en Redis), máximo de solicitudes por teléfono y empresa (`PORTAL_MAX_SOLICITUDES_POR_TELEFONO` en `PORTAL_VENTANA_TELEFONO_MIN`), campo trampa `sitio_web` y anticipación mínima por empresa (DC-10). Desde el aeropuerto, si no viene `recogida_en` se calcula como llegada del vuelo + margen nacional (RN-17, DC-12).
+
+La verificación por WhatsApp está simulada (`apps/integraciones/notificaciones.py`, solo deja un log con el número enmascarado); Twilio es HU-20. Las solicitudes no confirmadas se cancelan al vencer el plazo (RN-06) con `python manage.py expirar_pendientes`, que el servicio `programador` del compose ejecuta cada 60 s.
+
 ## Autenticación
 
 | Canal | Login | Renovación | Roles |
