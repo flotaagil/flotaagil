@@ -572,12 +572,14 @@ components:
       enum:
       - PASAJERO
       - DESPACHADOR
+      - ADMINISTRADOR
       - SUPERVISOR
       - SISTEMA
       type: string
       description: |-
         * `PASAJERO` - Pasajero
         * `DESPACHADOR` - Despachador
+        * `ADMINISTRADOR` - Administrador
         * `SUPERVISOR` - Supervisor de convenio
         * `SISTEMA` - Sistema
     PaginatedViajeList:

@@ -12,6 +12,7 @@ from rest_framework.exceptions import APIException, ValidationError
 from apps.aeropuerto.models import Vuelo
 from apps.auditoria import servicios as auditoria
 from apps.auditoria.models import Entidad
+from apps.cuentas.models import Rol
 from apps.integraciones.geocodificador import (
     Coordenadas,
     GeocodificacionError,
@@ -162,11 +163,16 @@ def editar_viaje(viaje: Viaje, datos: dict, *, geocodificador=None) -> Viaje:
     return Viaje.objects.get(pk=viaje.pk)
 
 
+ORIGEN_POR_ROL = {
+    Rol.ADMINISTRADOR: OrigenCancelacion.ADMINISTRADOR,
+    Rol.DESPACHADOR: OrigenCancelacion.DESPACHADOR,
+}
+
+
 def cancelar_viaje(viaje: Viaje, *, motivo: str, usuario) -> Viaje:
     """Cancelación desde el panel: exige motivo, registra el historial y la auditoría.
 
-    origen_cancelacion es DESPACHADOR para cualquier usuario del panel (DC-08); el historial
-    distingue al administrador.
+    origen_cancelacion es DESPACHADOR o ADMINISTRADOR según el rol de quien cancela (DC-08).
     """
     if viaje.estado not in estados.CANCELABLES:
         raise ConflictoEstado(f"Una reserva en estado {viaje.estado} no se puede cancelar desde aquí.")
@@ -179,7 +185,7 @@ def cancelar_viaje(viaje: Viaje, *, motivo: str, usuario) -> Viaje:
                 actor=estados.actor_de(usuario),
                 usuario=usuario,
                 motivo_cancelacion=motivo,
-                origen_cancelacion=OrigenCancelacion.DESPACHADOR,
+                origen_cancelacion=ORIGEN_POR_ROL[usuario.rol],
             )
         except estados.TransicionInvalida as error:
             raise ConflictoEstado(str(error)) from error

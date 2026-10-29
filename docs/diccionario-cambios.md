@@ -11,7 +11,7 @@ Agregados y desvíos de la implementación respecto de [`diccionario-datos.md`](
 | DC-05 | 2026-10-29 | Decisión de diseño | VIAJE | Coordenadas obtenidas con un geocodificador detrás de un adaptador | `origen_geo` y `destino_geo` son NOT NULL y los formularios capturan direcciones en texto | Implementado (feat/HU-03-reservas) |
 | DC-06 | 2026-10-29 | Precisión de uso | VUELO | Solo se crea para viajes `DESDE_AEROPUERTO`; `hora_programada` la informa el pasajero o el despachador | `hora_programada` es la hora de llegada que usan RN-17 y HU-27; HU-26 la valida o corrige | Implementado en el panel (feat/HU-03-reservas); portal en HU-19 |
 | DC-07 | 2026-10-29 | Supuesto | USUARIO | Duración del bloqueo tras 5 intentos fallidos: 15 min, configurable (`LOGIN_BLOQUEO_MIN`) | El Anexo D define el bloqueo al llegar a 5 intentos, pero no su duración | Implementado (feat/backend-base) |
-| DC-08 | 2026-10-29 | Precisión de uso | VIAJE | `origen_cancelacion = DESPACHADOR` para cualquier usuario del panel (despachador o administrador) | El dominio de `origen_cancelacion` no incluye ADMINISTRADOR; el usuario exacto queda en HISTORIAL_ESTADO y AUDITORIA | Implementado (feat/HU-03-reservas) — por confirmar |
+| DC-08 | 2026-10-29 | Desvío de dominio | VIAJE | `origen_cancelacion` agrega `ADMINISTRADOR` | Igual que en DC-03: el administrador también cancela desde el panel; registrarlo como DESPACHADOR falsearía el origen | Implementado (feat/HU-03-reservas) |
 | DC-09 | 2026-10-29 | Corrección de tipo | VIAJE, HISTORIAL_ESTADO | `estado`, `estado_anterior` y `estado_nuevo` pasan de VARCHAR(20) a VARCHAR(22) | `PENDIENTE_CONFIRMACION` tiene 22 caracteres y no cabe en VARCHAR(20) | Implementado (feat/HU-03-reservas) |
 
 ## DC-01 · EMPRESA.slug
@@ -71,3 +71,17 @@ La restricción «Dentro de la RM» de `VIAJE.origen_geo` se valida contra la zo
 
 - Se crea solo para viajes con `sentido = DESDE_AEROPUERTO` (vuelos de llegada). Para `HACIA_AEROPUERTO` no se crea VUELO.
 - `hora_programada` la informa quien ingresa la reserva (portal o despachador); `fecha` es la fecha local de esa hora. HU-26 la valida contra la API de vuelos y la corrige.
+
+## DC-08 · VIAJE.origen_cancelacion
+
+Dominio: `PASAJERO | DESPACHADOR | ADMINISTRADOR | SUPERVISOR | SISTEMA` (se agrega `ADMINISTRADOR`). En una cancelación desde el panel, el origen corresponde al rol de quien cancela; el usuario exacto queda además en HISTORIAL_ESTADO y AUDITORIA.
+
+## DC-09 · Largo de los estados del viaje
+
+`VIAJE.estado`, `HISTORIAL_ESTADO.estado_anterior` y `HISTORIAL_ESTADO.estado_nuevo` son VARCHAR(22): el valor `PENDIENTE_CONFIRMACION` tiene 22 caracteres. Hay que corregir el Anexo D (dice VARCHAR(20)).
+
+## Pendientes por revisar
+
+| # | Tema | Detalle |
+|---|---|---|
+| PR-01 | RN-15 y AUDITORIA | RN-15 fija la retención de «eventos 90 días». Si AUDITORIA cuenta como evento, su purga choca con RN-12 (auditoría inmutable) y con el trigger `auditoria_sin_cambios`, que impide borrar filas. Definir si AUDITORIA queda fuera de RN-15 (retención indefinida o propia) o si la purga se hace con un procedimiento controlado que desactive el trigger y deje constancia. Mientras no se decida, AUDITORIA no se purga. |

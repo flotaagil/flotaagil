@@ -402,12 +402,14 @@ class TestCancelar:
         assert api.post(cancelar(viaje), {"motivo": "x"}, format="json").status_code == 409
         assert not Auditoria.objects.exists()
 
-    def test_administrador_queda_en_el_historial(self, cliente, administrador):
+    def test_administrador_queda_como_origen_y_actor(self, cliente, administrador):
+        """DC-03 y DC-08."""
         cliente.force_authenticate(administrador)
         viaje = ViajeFactory(empresa=administrador.empresa)
         respuesta = cliente.post(cancelar(viaje), {"motivo": "Duplicada"}, format="json")
         assert respuesta.data["historial"][-1]["actor"] == "ADMINISTRADOR"
-        assert respuesta.data["origen_cancelacion"] == "DESPACHADOR"
+        assert respuesta.data["origen_cancelacion"] == "ADMINISTRADOR"
+        assert Auditoria.objects.get(entidad_id=viaje.pk).usuario == administrador
 
 
 @pytest.mark.django_db

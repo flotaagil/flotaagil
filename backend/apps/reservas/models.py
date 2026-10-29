@@ -60,6 +60,8 @@ class Sentido(models.TextChoices):
 class OrigenCancelacion(models.TextChoices):
     PASAJERO = "PASAJERO", "Pasajero"
     DESPACHADOR = "DESPACHADOR", "Despachador"
+    # DC-08: agregado al dominio del Anexo D, igual que en HISTORIAL_ESTADO.actor (DC-03).
+    ADMINISTRADOR = "ADMINISTRADOR", "Administrador"
     SUPERVISOR = "SUPERVISOR", "Supervisor de convenio"
     SISTEMA = "SISTEMA", "Sistema"
 
