@@ -75,6 +75,10 @@ Los valores marcados como supuestos (márgenes, 10 min fuera de geocerca, 15 min
 - **Nunca push directo a `main`.** Todo entra por PR con CI en verde y revisión del otro integrante. Fusión *squash*.
 - **Ramas:** `feat/HU-03-reservas`, `fix/HU-16-monto-pago`, `chore/…`, `docs/…`, `test/…`. Una rama por HU o tarea.
 - **Commits y título del PR:** Conventional Commits en español con scope del área: `feat(backend): crear modelo VIAJE`, `fix(app): …`. El PR referencia el issue (`Closes #12`).
+- **Flujo del tablero** («FlotaÁgil — Backlog»):
+  - Al crear la rama de una HU o tarea, su tarjeta pasa a **En curso**.
+  - Cada commit de esa rama lleva `Refs #N` con el número del issue (no el código de la HU).
+  - El PR usa `Closes #N`; al vincularlo la tarjeta pasa a **En revisión** y al fusionarlo a **Hecho** (workflows del tablero).
 - **Versiones:** SemVer. Línea base `v0.1`–`v0.4` al cierre de cada sprint y `v1.0.0` en producción.
 - **Definición de terminado** (revisar contra la DoD del Informe 1): criterios de aceptación cumplidos, pruebas automatizadas de la HU en verde, cobertura ≥ 70 % en lo tocado, PR revisado, sin secretos ni datos personales, documentación actualizada si hubo cambio (Anexo B).
 - **Cambios de alcance:** issue con plantilla «Solicitud de cambio». No se agrega funcionalidad fuera del backlog sin ese issue.
