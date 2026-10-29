@@ -3,6 +3,11 @@ from rest_framework import serializers
 from .models import Empresa, Usuario
 
 
+class ErrorSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+    code = serializers.CharField()
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=120)
     password = serializers.CharField(write_only=True, trim_whitespace=False, max_length=128)

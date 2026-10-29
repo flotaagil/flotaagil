@@ -28,8 +28,8 @@ def yo(cliente, access):
 
 @pytest.mark.django_db
 class TestLoginPanel:
-    def test_despachador_obtiene_access_y_cookie_httponly(self, cliente, despachador):
-        respuesta = login_panel(cliente, despachador)
+    def test_despachador_obtiene_access_y_cookie_httponly(self, panel, despachador):
+        respuesta = login_panel(panel, despachador)
         assert respuesta.status_code == 200
         assert respuesta.data["usuario"]["rol"] == "DESPACHADOR"
         assert respuesta.data["usuario"]["empresa"]["id"] == despachador.empresa_id
@@ -40,150 +40,152 @@ class TestLoginPanel:
         assert cookie["path"] == "/api/auth/"
         assert int(cookie["max-age"]) == 12 * 3600
 
-    def test_access_sirve_para_consultar_la_sesion(self, cliente, administrador):
-        access = login_panel(cliente, administrador).data["access"]
-        respuesta = yo(cliente, access)
+    def test_access_sirve_para_consultar_la_sesion(self, panel, administrador):
+        access = login_panel(panel, administrador).data["access"]
+        respuesta = yo(panel, access)
         assert respuesta.status_code == 200
         assert respuesta.data["email"] == administrador.email
 
-    def test_email_sin_distinguir_mayusculas(self, cliente, despachador):
-        respuesta = cliente.post(
+    def test_email_sin_distinguir_mayusculas(self, panel, despachador):
+        respuesta = panel.post(
             reverse("auth-token"),
             {"email": despachador.email.upper(), "password": CLAVE_PRUEBA},
             format="json",
         )
         assert respuesta.status_code == 200
 
-    def test_conductor_no_entra_al_panel(self, cliente, conductor):
-        respuesta = login_panel(cliente, conductor)
+    def test_conductor_no_entra_al_panel(self, panel, conductor):
+        respuesta = login_panel(panel, conductor)
         assert respuesta.status_code == 403
         assert COOKIE not in respuesta.cookies
 
-    def test_email_desconocido_responde_igual_que_clave_incorrecta(self, cliente, despachador):
-        desconocido = cliente.post(
+    def test_email_desconocido_responde_igual_que_clave_incorrecta(self, panel, despachador):
+        desconocido = panel.post(
             reverse("auth-token"), {"email": "nadie@prueba.example", "password": "x"}, format="json"
         )
-        incorrecta = login_panel(cliente, despachador, password="incorrecta")
+        incorrecta = login_panel(panel, despachador, password="incorrecta")
         assert desconocido.status_code == incorrecta.status_code == 401
         assert desconocido.data["detail"] == incorrecta.data["detail"]
 
-    def test_usuario_inactivo(self, cliente, empresa):
+    def test_usuario_inactivo(self, panel, empresa):
         usuario = UsuarioFactory(empresa=empresa, activo=False)
-        assert login_panel(cliente, usuario).status_code == 401
+        assert login_panel(panel, usuario).status_code == 401
 
-    def test_empresa_inactiva(self, cliente, despachador):
+    def test_empresa_inactiva(self, panel, despachador):
         despachador.empresa.activa = False
         despachador.empresa.save()
-        assert login_panel(cliente, despachador).status_code == 401
+        assert login_panel(panel, despachador).status_code == 401
 
-    def test_datos_faltantes(self, cliente, db):
-        assert cliente.post(reverse("auth-token"), {}, format="json").status_code == 400
+    def test_datos_faltantes(self, panel, db):
+        assert panel.post(reverse("auth-token"), {}, format="json").status_code == 400
 
-    def test_actualiza_last_login(self, cliente, despachador):
-        login_panel(cliente, despachador)
+    def test_actualiza_last_login(self, panel, despachador):
+        login_panel(panel, despachador)
         despachador.refresh_from_db()
         assert despachador.last_login is not None
 
-    def test_access_incluye_rol_y_empresa(self, cliente, despachador):
+    def test_access_incluye_rol_y_empresa(self, panel, despachador):
         from rest_framework_simplejwt.tokens import AccessToken
 
-        token = AccessToken(login_panel(cliente, despachador).data["access"])
+        token = AccessToken(login_panel(panel, despachador).data["access"])
         assert token["rol"] == "DESPACHADOR"
         assert token["empresa_id"] == despachador.empresa_id
 
 
 @pytest.mark.django_db
 class TestBloqueo:
-    def test_bloquea_al_quinto_intento_fallido(self, cliente, despachador):
+    def test_bloquea_al_quinto_intento_fallido(self, panel, despachador):
         for intento in range(1, 5):
-            assert login_panel(cliente, despachador, "mala").status_code == 401
+            assert login_panel(panel, despachador, "mala").status_code == 401
             despachador.refresh_from_db()
             assert despachador.intentos_fallidos == intento
             assert despachador.bloqueado_hasta is None
-        quinto = login_panel(cliente, despachador, "mala")
+        quinto = login_panel(panel, despachador, "mala")
         assert quinto.status_code == 401
         assert quinto.data["detail"].code == "cuenta_bloqueada"
         despachador.refresh_from_db()
         assert despachador.intentos_fallidos == 5
         assert despachador.bloqueado_hasta > timezone.now()
 
-    def test_bloqueada_rechaza_incluso_la_clave_correcta(self, cliente, despachador):
+    def test_bloqueada_rechaza_incluso_la_clave_correcta(self, panel, despachador):
         Usuario.objects.filter(pk=despachador.pk).update(
             intentos_fallidos=5, bloqueado_hasta=timezone.now() + timedelta(minutes=10)
         )
-        respuesta = login_panel(cliente, despachador)
+        respuesta = login_panel(panel, despachador)
         assert respuesta.status_code == 401
         assert respuesta.data["detail"].code == "cuenta_bloqueada"
 
-    def test_bloqueo_vencido_permite_entrar_y_reinicia_contador(self, cliente, despachador):
+    def test_bloqueo_vencido_permite_entrar_y_reinicia_contador(self, panel, despachador):
         Usuario.objects.filter(pk=despachador.pk).update(
             intentos_fallidos=5, bloqueado_hasta=timezone.now() - timedelta(seconds=1)
         )
-        assert login_panel(cliente, despachador).status_code == 200
+        assert login_panel(panel, despachador).status_code == 200
         despachador.refresh_from_db()
         assert (despachador.intentos_fallidos, despachador.bloqueado_hasta) == (0, None)
 
-    def test_ingreso_correcto_reinicia_intentos(self, cliente, despachador):
-        login_panel(cliente, despachador, "mala")
-        login_panel(cliente, despachador, "mala")
-        assert login_panel(cliente, despachador).status_code == 200
+    def test_ingreso_correcto_reinicia_intentos(self, panel, despachador):
+        login_panel(panel, despachador, "mala")
+        login_panel(panel, despachador, "mala")
+        assert login_panel(panel, despachador).status_code == 200
         despachador.refresh_from_db()
         assert despachador.intentos_fallidos == 0
 
 
 @pytest.mark.django_db
 class TestRefreshPanel:
-    def test_renueva_y_rota_la_cookie(self, cliente, despachador):
-        primera = login_panel(cliente, despachador).cookies[COOKIE].value
-        respuesta = cliente.post(reverse("auth-refresh"))
+    def test_renueva_y_rota_la_cookie(self, panel, despachador):
+        primera = login_panel(panel, despachador).cookies[COOKIE].value
+        respuesta = panel.post(reverse("auth-refresh"))
         assert respuesta.status_code == 200
-        assert yo(cliente, respuesta.data["access"]).status_code == 200
+        assert yo(panel, respuesta.data["access"]).status_code == 200
         segunda = respuesta.cookies[COOKIE].value
         assert segunda and segunda != primera
 
-    def test_refresh_rotado_no_se_puede_reusar(self, cliente, despachador):
-        primera = login_panel(cliente, despachador).cookies[COOKIE].value
-        cliente.post(reverse("auth-refresh"))
-        cliente.cookies[COOKIE] = primera
-        assert cliente.post(reverse("auth-refresh")).status_code == 401
+    def test_refresh_rotado_no_se_puede_reusar(self, panel, despachador):
+        primera = login_panel(panel, despachador).cookies[COOKIE].value
+        panel.post(reverse("auth-refresh"))
+        panel.cookies[COOKIE] = primera
+        assert panel.post(reverse("auth-refresh")).status_code == 401
 
-    def test_sin_cookie(self, cliente, db):
-        respuesta = cliente.post(reverse("auth-refresh"))
+    def test_sin_cookie(self, panel, db):
+        respuesta = panel.post(reverse("auth-refresh"))
         assert respuesta.status_code == 401
 
-    def test_cookie_invalida_se_borra(self, cliente, db):
-        cliente.cookies[COOKIE] = "no-es-un-token"
-        respuesta = cliente.post(reverse("auth-refresh"))
+    def test_cookie_invalida_no_se_borra(self, panel, db):
+        # P2: un refresh rechazado no toca la cookie; solo el logout la borra.
+        panel.cookies[COOKIE] = "no-es-un-token"
+        respuesta = panel.post(reverse("auth-refresh"))
         assert respuesta.status_code == 401
-        assert respuesta.cookies[COOKIE].value == ""
+        assert respuesta.data["code"] == "sesion_invalida"
+        assert COOKIE not in respuesta.cookies
 
-    def test_usuario_desactivado_pierde_la_sesion(self, cliente, despachador):
-        login_panel(cliente, despachador)
+    def test_usuario_desactivado_pierde_la_sesion(self, panel, despachador):
+        login_panel(panel, despachador)
         Usuario.objects.filter(pk=despachador.pk).update(activo=False)
-        assert cliente.post(reverse("auth-refresh")).status_code == 401
+        assert panel.post(reverse("auth-refresh")).status_code == 401
 
-    def test_refresh_de_conductor_no_sirve_en_el_panel(self, cliente, conductor):
-        refresh = login_app(cliente, conductor).data["refresh"]
-        cliente.cookies[COOKIE] = refresh
-        assert cliente.post(reverse("auth-refresh")).status_code == 401
+    def test_refresh_de_conductor_no_sirve_en_el_panel(self, panel, conductor):
+        refresh = login_app(panel, conductor).data["refresh"]
+        panel.cookies[COOKIE] = refresh
+        assert panel.post(reverse("auth-refresh")).status_code == 401
 
 
 @pytest.mark.django_db
 class TestLogout:
-    def test_invalida_el_refresh_y_borra_la_cookie(self, cliente, despachador):
-        refresh = login_panel(cliente, despachador).cookies[COOKIE].value
-        respuesta = cliente.post(reverse("auth-logout"))
+    def test_invalida_el_refresh_y_borra_la_cookie(self, panel, despachador):
+        refresh = login_panel(panel, despachador).cookies[COOKIE].value
+        respuesta = panel.post(reverse("auth-logout"))
         assert respuesta.status_code == 204
         assert respuesta.cookies[COOKIE].value == ""
-        cliente.cookies[COOKIE] = refresh
-        assert cliente.post(reverse("auth-refresh")).status_code == 401
+        panel.cookies[COOKIE] = refresh
+        assert panel.post(reverse("auth-refresh")).status_code == 401
 
-    def test_sin_sesion_igual_responde_204(self, cliente, db):
-        assert cliente.post(reverse("auth-logout")).status_code == 204
+    def test_sin_sesion_igual_responde_204(self, panel, db):
+        assert panel.post(reverse("auth-logout")).status_code == 204
 
-    def test_cookie_invalida(self, cliente, db):
-        cliente.cookies[COOKIE] = "basura"
-        assert cliente.post(reverse("auth-logout")).status_code == 204
+    def test_cookie_invalida(self, panel, db):
+        panel.cookies[COOKIE] = "basura"
+        assert panel.post(reverse("auth-logout")).status_code == 204
 
 
 @pytest.mark.django_db
@@ -208,16 +210,16 @@ class TestApp:
         respuesta = cliente.post(reverse("auth-app-refresh"), {"refresh": "x"}, format="json")
         assert respuesta.status_code == 401
 
-    def test_refresh_del_panel_no_sirve_en_la_app(self, cliente, despachador):
-        refresh = login_panel(cliente, despachador).cookies[COOKIE].value
+    def test_refresh_del_panel_no_sirve_en_la_app(self, cliente, panel, despachador):
+        refresh = login_panel(panel, despachador).cookies[COOKIE].value
         respuesta = cliente.post(reverse("auth-app-refresh"), {"refresh": refresh}, format="json")
         assert respuesta.status_code == 401
 
 
 @pytest.mark.django_db
 class TestThrottling:
-    def test_limita_intentos_de_login_por_ip(self, cliente, despachador, settings):
-        respuestas = [login_panel(cliente, despachador, "mala").status_code for _ in range(11)]
+    def test_limita_intentos_de_login_por_ip(self, panel, despachador, settings):
+        respuestas = [login_panel(panel, despachador, "mala").status_code for _ in range(11)]
         assert respuestas[-1] == 429
 
 

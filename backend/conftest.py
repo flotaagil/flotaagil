@@ -24,9 +24,25 @@ def _cache_de_pruebas(settings):
     cache.clear()
 
 
+ORIGEN_PANEL = "http://localhost:5173"
+
+
+@pytest.fixture(autouse=True)
+def _origenes_del_panel(settings):
+    """El panel de pruebas vive en el origen de desarrollo de Vite."""
+    settings.PANEL_ORIGENES = [ORIGEN_PANEL]
+
+
 @pytest.fixture
 def cliente():
+    """Cliente sin encabezados de navegador (como curl o la app del conductor)."""
     return APIClient()
+
+
+@pytest.fixture
+def panel():
+    """Cliente que se comporta como el navegador del panel: envía Origin en cada petición."""
+    return APIClient(HTTP_ORIGIN=ORIGEN_PANEL)
 
 
 @pytest.fixture
