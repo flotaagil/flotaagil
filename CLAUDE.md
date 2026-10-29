@@ -74,11 +74,13 @@ Los valores marcados como supuestos (márgenes, 10 min fuera de geocerca, 15 min
 - **Scrum**, sprints de 2 semanas, tablero en GitHub Projects «FlotaÁgil — Backlog». Backlog completo en `docs/backlog/backlog.json` (25 HU, 178 SP).
 - **Nunca push directo a `main`.** Todo entra por PR con CI en verde y revisión del otro integrante. Fusión *squash*.
 - **Ramas:** `feat/HU-03-reservas`, `fix/HU-16-monto-pago`, `chore/…`, `docs/…`, `test/…`. Una rama por HU o tarea.
-- **Commits y título del PR:** Conventional Commits en español con scope del área: `feat(backend): crear modelo VIAJE`, `fix(app): …`. El PR referencia el issue (`Closes #12`).
+- **Commits y título del PR:** Conventional Commits en español con scope del área: `feat(backend): crear modelo VIAJE`, `fix(app): …`. El PR referencia el issue: `Closes #12` si termina la HU, `Refs #12` si es parcial.
 - **Flujo del tablero** («FlotaÁgil — Backlog»):
   - Al crear la rama de una HU o tarea, su tarjeta pasa a **En curso**.
   - Cada commit de esa rama lleva `Refs #N` con el número del issue (no el código de la HU).
-  - El PR usa `Closes #N`; al vincularlo la tarjeta pasa a **En revisión** y al fusionarlo a **Hecho** (workflows del tablero).
+  - El PR que termina la HU (normalmente el web) usa `Closes #N`; al vincularlo la tarjeta pasa a **En revisión** y al fusionarlo a **Hecho** (workflows del tablero). Los PR parciales, como el backend de una HU, usan `Refs #N` y no mueven la tarjeta. Las tareas técnicas sin issue no llevan ninguno de los dos.
+  - Los keywords de cierre solo actúan en PR cuya base es `main`; en PR encadenados, verificar con `gh pr view <N> --json baseRefName,closingIssuesReferences` antes de fusionar. Nadie cierra issues a mano.
+  - La fusión *squash* deja el cuerpo vacío: escribir los `Refs #N` al fusionar.
 - **Versiones:** SemVer. Línea base `v0.1`–`v0.4` al cierre de cada sprint y `v1.0.0` en producción.
 - **Definición de terminado** (revisar contra la DoD del Informe 1): criterios de aceptación cumplidos, pruebas automatizadas de la HU en verde, cobertura ≥ 70 % en lo tocado, PR revisado, sin secretos ni datos personales, documentación actualizada si hubo cambio (Anexo B).
 - **Cambios de alcance:** issue con plantilla «Solicitud de cambio». No se agrega funcionalidad fuera del backlog sin ese issue.
