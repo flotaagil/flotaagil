@@ -31,6 +31,8 @@ npm run dev          # http://localhost:5173 ; /api → http://localhost:8000 (p
 
 Se versiona `package-lock.json` y se instala con `npm ci`. No se usan `--force` ni `--legacy-peer-deps`.
 
+Para **cambiar dependencias** (`npm install <paquete>`), npm 10 (el que trae Node 22) falla con `Cannot read properties of null (reading 'edgesOut')` al resolver las peers opcionales de Vitest 4. Se usa npm 11 solo para esa operación: `npx npm@11.21.1 install …`. El lockfile resultante (v3) se instala sin problemas con el `npm ci` de npm 10.
+
 ## Estructura
 
 ```

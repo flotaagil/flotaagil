@@ -19,6 +19,8 @@ export default defineConfig({
       // Activada siempre: el CI corre `npx vitest run` y los umbrales se exigen igual.
       enabled: true,
       provider: 'v8',
+      // Desde Vitest 4 (sin `coverage.all`) `include` es lo que hace contar también los archivos que
+      // ninguna prueba carga (con 0 %); sin él, el umbral solo vería los archivos con pruebas.
       include: ['src/**/*.{ts,tsx}'],
       exclude: ['src/api/esquema.d.ts', 'src/pruebas/**', 'src/**/*.test.{ts,tsx}', 'src/main.tsx'],
       thresholds: {
