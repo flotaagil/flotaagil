@@ -69,12 +69,28 @@ class TestEmpresa:
         empresa.save()
         assert ConfiguracionEmpresa.objects.filter(empresa=empresa).count() == 1
 
-    def test_zona_de_operacion(self):
-        config = EmpresaFactory().configuracion
-        assert config.contiene(-33.45, -70.66)  # Santiago centro
-        assert config.contiene(-33.39, -70.79)  # Aeropuerto SCL
-        assert not config.contiene(-36.82, -73.05)  # Concepción
-        assert not config.contiene(-33.45, -71.80)  # al oeste del límite
+    @pytest.mark.parametrize(
+        ("lat", "lon"),
+        [(-33.4489, -70.6693), (-33.3930, -70.7858), (-33.5927, -70.7069)],
+        ids=["santiago-centro", "aeropuerto-scl", "san-bernardo"],
+    )
+    def test_dentro_de_la_zona(self, lat, lon):
+        assert EmpresaFactory().configuracion.contiene(lat, lon)
+
+    @pytest.mark.parametrize(
+        ("lat", "lon"),
+        [(-32.8895, -68.8458), (-32.8337, -70.5983), (-35.4264, -71.6554), (-36.8270, -73.0503)],
+        ids=["mendoza", "los-andes", "talca", "concepcion"],
+    )
+    def test_fuera_de_la_zona(self, lat, lon):
+        assert not EmpresaFactory().configuracion.contiene(lat, lon)
+
+    @pytest.mark.parametrize(
+        ("lat", "lon"), [(-33.0472, -71.6127), (-34.1708, -70.7444)], ids=["valparaiso", "rancagua"]
+    )
+    def test_limitacion_rectangulo_envolvente(self, lat, lon):
+        """DC-02: el rectángulo envolvente de la RM incluye zonas de otras regiones."""
+        assert EmpresaFactory().configuracion.contiene(lat, lon)
 
     def test_zona_debe_estar_ordenada(self):
         config = EmpresaFactory().configuracion

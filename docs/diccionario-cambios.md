@@ -10,6 +10,7 @@ Agregados y desvíos de la implementación respecto de [`diccionario-datos.md`](
 | DC-04 | 2026-10-29 | Agregado técnico | USUARIO | Columnas y tablas del sistema de autenticación de Django | Propias del framework; se usan solo para el admin de mantenimiento interno | Implementado (feat/backend-base) |
 | DC-05 | 2026-10-29 | Decisión de diseño | VIAJE | Coordenadas obtenidas con un geocodificador detrás de un adaptador | `origen_geo` y `destino_geo` son NOT NULL y los formularios capturan direcciones en texto | Pendiente |
 | DC-06 | 2026-10-29 | Precisión de uso | VUELO | Solo se crea para viajes `DESDE_AEROPUERTO`; `hora_programada` la informa el pasajero o el despachador | `hora_programada` es la hora de llegada que usan RN-17 y HU-27; HU-26 la valida o corrige | Pendiente |
+| DC-07 | 2026-10-29 | Supuesto | USUARIO | Duración del bloqueo tras 5 intentos fallidos: 15 min, configurable (`LOGIN_BLOQUEO_MIN`) | El Anexo D define el bloqueo al llegar a 5 intentos, pero no su duración | Implementado (feat/backend-base) |
 
 ## DC-01 · EMPRESA.slug
 
@@ -35,6 +36,8 @@ Agregados y desvíos de la implementación respecto de [`diccionario-datos.md`](
 Relación: EMPRESA 1:1 CONFIGURACION_EMPRESA. Se crea junto con la empresa con los valores por defecto.
 
 La zona de operación es un rectángulo (lat/lon mínimos y máximos) que valida «Dentro de la RM» en `VIAJE.origen_geo` y acota las coordenadas del geocodificador de desarrollo. Los valores por defecto son un rectángulo **aproximado** que contiene la Región Metropolitana; cada empresa puede ajustarlo.
+
+**Limitación.** Es un rectángulo envolvente, no el límite real de la región: también incluye zonas de regiones vecinas, por ejemplo Valparaíso y San Antonio (Región de Valparaíso) y Rancagua (Región de O'Higgins). Un origen en esas zonas pasa la validación. El polígono real de la RM (p. ej. como GEOCERCA) queda para más adelante.
 
 ## DC-03 · HISTORIAL_ESTADO.actor
 
