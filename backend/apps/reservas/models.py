@@ -17,6 +17,8 @@ class Pasajero(models.Model):
     telefono = models.CharField(max_length=16, validators=[validar_telefono_e164])
     verificado_en = models.DateTimeField(null=True, blank=True)
     opt_in_en = models.DateTimeField(null=True, blank=True)
+    # DC-11: evidencia de la aceptación del aviso de privacidad en el portal (HU-19).
+    privacidad_aceptada_en = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "pasajero"

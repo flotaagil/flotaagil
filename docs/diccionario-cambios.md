@@ -72,6 +72,14 @@ La restricción «Dentro de la RM» de `VIAJE.origen_geo` se valida contra la zo
 - Se crea solo para viajes con `sentido = DESDE_AEROPUERTO` (vuelos de llegada). Para `HACIA_AEROPUERTO` no se crea VUELO.
 - `hora_programada` la informa quien ingresa la reserva (portal o despachador); `fecha` es la fecha local de esa hora. HU-26 la valida contra la API de vuelos y la corrige.
 
+## DC-10, DC-11 y DC-12 (HU-19)
+
+| # | Tipo | Tabla | Cambio | Motivo | Estado |
+|---|---|---|---|---|---|
+| DC-10 | Agregado | CONFIGURACION_EMPRESA | `anticipacion_minima_min` SMALLINT NOT NULL, defecto 30 | Anticipación mínima de una solicitud del portal, configurable por empresa | Implementado (feat/HU-19-portal) |
+| DC-11 | Agregado | PASAJERO | `privacidad_aceptada_en` TIMESTAMPTZ NULL | Evidencia de la aceptación del aviso de privacidad (HU-19) | Implementado (feat/HU-19-portal) |
+| DC-12 | Supuesto | VUELO | Sin distinción nacional/internacional: la recogida calculada (RN-17) usa `margen_nacional_min` | El Anexo D no tiene columna que distinga el tipo de vuelo | Implementado (feat/HU-19-portal) — revisar en HU-27 |
+
 ## DC-08 · VIAJE.origen_cancelacion
 
 Dominio: `PASAJERO | DESPACHADOR | ADMINISTRADOR | SUPERVISOR | SISTEMA` (se agrega `ADMINISTRADOR`). En una cancelación desde el panel, el origen corresponde al rol de quien cancela; el usuario exacto queda además en HISTORIAL_ESTADO y AUDITORIA.

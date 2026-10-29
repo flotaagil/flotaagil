@@ -75,6 +75,8 @@ class ConfiguracionEmpresa(models.Model):
     tolerancia_fila_min = _minutos(10)
     espera_no_presentacion_min = _minutos(15)
     expiracion_verificacion_min = _minutos(15, minimo=1)
+    # DC-10: anticipación mínima de una solicitud del portal respecto de la hora de recogida.
+    anticipacion_minima_min = _minutos(30)
     # Zona de operación: rectángulo aproximado de la Región Metropolitana por defecto.
     zona_lat_min = _coordenada("-34.300000", 90)
     zona_lat_max = _coordenada("-32.920000", 90)

@@ -84,6 +84,23 @@ class TestTransicionar:
         with pytest.raises(estados.TransicionInvalida):
             estados.transicionar(viaje, E.PASAJERO_A_BORDO, actor=Actor.CONDUCTOR)
 
+    def test_desde_exige_el_estado_actual(self, empresa):
+        viaje = ViajeFactory(empresa=empresa, estado=E.SOLICITADO)
+        with pytest.raises(estados.TransicionInvalida):
+            estados.transicionar(
+                viaje,
+                E.CANCELADO,
+                desde=E.PENDIENTE_CONFIRMACION,
+                actor=Actor.SISTEMA,
+                motivo_cancelacion="x",
+            )
+        viaje.refresh_from_db()
+        assert viaje.estado == E.SOLICITADO
+        estados.transicionar(
+            viaje, E.CANCELADO, desde=E.SOLICITADO, actor=Actor.SISTEMA, motivo_cancelacion="x"
+        )
+        assert viaje.estado == E.CANCELADO
+
     def test_actor_segun_rol(self, administrador, despachador, conductor):
         assert estados.actor_de(administrador) == Actor.ADMINISTRADOR
         assert estados.actor_de(despachador) == Actor.DESPACHADOR

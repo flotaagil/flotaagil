@@ -131,6 +131,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/UsuarioSesion'
           description: ''
+  /api/portal/{slug}/:
+    get:
+      operationId: portal_retrieve
+      summary: Datos públicos de la empresa para el formulario
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmpresaPublica'
+          description: ''
+        '404':
+          description: Empresa inexistente o inactiva
+  /api/portal/{slug}/solicitudes/:
+    post:
+      operationId: portal_solicitudes_create
+      description: Crea la reserva en PENDIENTE_CONFIRMACION. Se confirma respondiendo
+        el WhatsApp (HU-20) antes de `expira_en`; si no, se cancela (RN-06).
+      summary: Solicitar un viaje sin cuenta
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SolicitudRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SolicitudRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudRespuesta'
+          description: ''
+        '404':
+          description: Empresa inexistente o inactiva
+        '429':
+          description: Demasiadas solicitudes desde la IP o con el mismo teléfono
   /api/viajes/:
     get:
       operationId: viajes_list
@@ -471,6 +533,25 @@ components:
       required:
       - cliente_nombre
       - id
+    EmpresaPublica:
+      type: object
+      properties:
+        razon_social:
+          type: string
+          maxLength: 120
+        slug:
+          type: string
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          maxLength: 50
+        anticipacion_minima_min:
+          type: integer
+        expiracion_verificacion_min:
+          type: integer
+      required:
+      - anticipacion_minima_min
+      - expiracion_verificacion_min
+      - razon_social
+      - slug
     EmpresaResumen:
       type: object
       properties:
@@ -708,6 +789,79 @@ components:
       required:
       - access
       - usuario
+    SolicitudRequest:
+      type: object
+      description: 'HU-19: solicitud de viaje sin cuenta.'
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 80
+        telefono:
+          type: string
+          minLength: 1
+          description: WhatsApp en formato E.164, p. ej. +56912345678.
+          maxLength: 24
+        origen_dir:
+          type: string
+          minLength: 1
+          maxLength: 200
+        destino_dir:
+          type: string
+          minLength: 1
+          maxLength: 200
+        recogida_en:
+          type: string
+          format: date-time
+          nullable: true
+          description: 'Obligatoria, salvo en viajes desde el aeropuerto con vuelo:
+            ahí se calcula si no viene.'
+        sentido:
+          allOf:
+          - $ref: '#/components/schemas/SentidoEnum'
+          description: |-
+            Si no viene: DESDE_AEROPUERTO cuando hay vuelo, URBANO si no.
+
+            * `DESDE_AEROPUERTO` - Desde el aeropuerto
+            * `HACIA_AEROPUERTO` - Hacia el aeropuerto
+            * `URBANO` - Urbano
+        vuelo:
+          allOf:
+          - $ref: '#/components/schemas/VueloLlegadaRequest'
+          description: Solo para viajes desde el aeropuerto.
+        acepta_privacidad:
+          type: boolean
+        acepta_whatsapp:
+          type: boolean
+        sitio_web:
+          type: string
+          writeOnly: true
+      required:
+      - acepta_privacidad
+      - acepta_whatsapp
+      - destino_dir
+      - nombre
+      - origen_dir
+      - telefono
+    SolicitudRespuesta:
+      type: object
+      properties:
+        estado:
+          type: string
+        recogida_en:
+          type: string
+          format: date-time
+        expira_en:
+          type: string
+          format: date-time
+          description: Plazo para confirmar por WhatsApp (RN-06).
+        mensaje:
+          type: string
+      required:
+      - estado
+      - expira_en
+      - mensaje
+      - recogida_en
     Tokens:
       type: object
       properties:
@@ -1013,6 +1167,21 @@ components:
           description: Hora programada de llegada.
       required:
       - hora_programada
+      - numero
+    VueloLlegadaRequest:
+      type: object
+      properties:
+        numero:
+          type: string
+          minLength: 1
+          description: Código IATA, p. ej. LA123 o H2 456.
+          maxLength: 8
+        hora_llegada:
+          type: string
+          format: date-time
+          description: Hora programada de llegada del vuelo.
+      required:
+      - hora_llegada
       - numero
   securitySchemes:
     jwtAuth:

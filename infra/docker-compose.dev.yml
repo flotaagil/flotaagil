@@ -43,6 +43,25 @@ services:
       redis:
         condition: service_healthy
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    # Sano cuando ya migró y responde: el programador espera esto.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/salud/')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  # Tareas periódicas mientras no exista Celery beat: expiración de solicitudes del portal (RN-06).
+  programador:
+    build: ../backend
+    env_file: ../backend/.env
+    volumes:
+      - ../backend:/app
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    command: python manage.py expirar_pendientes --cada 60
 
 volumes:
   db-datos:

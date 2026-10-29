@@ -58,11 +58,24 @@ def registrar_inicial(viaje: Viaje, *, actor: str, usuario=None) -> HistorialEst
 
 
 def transicionar(
-    viaje: Viaje, nuevo: str, *, actor: str, usuario=None, forzada: bool = False, **campos
+    viaje: Viaje,
+    nuevo: str,
+    *,
+    actor: str,
+    usuario=None,
+    forzada: bool = False,
+    desde: str | None = None,
+    **campos,
 ) -> Viaje:
-    """Cambia el estado con bloqueo de fila, valida la transición y registra el historial."""
+    """Cambia el estado con bloqueo de fila, valida la transición y registra el historial.
+
+    `desde` exige que el viaje siga en ese estado al bloquearlo: evita, por ejemplo, que la expiración
+    cancele una solicitud que el pasajero confirmó en el mismo instante.
+    """
     with transaction.atomic():
         actual = Viaje.objects.select_for_update().get(pk=viaje.pk)
+        if desde is not None and actual.estado != desde:
+            raise TransicionInvalida(actual.estado, nuevo)
         if not es_valida(actual.estado, nuevo, forzada=forzada):
             raise TransicionInvalida(actual.estado, nuevo)
         anterior = actual.estado

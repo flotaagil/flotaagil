@@ -97,9 +97,31 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 25,
-    "DEFAULT_THROTTLE_RATES": {"login": env("THROTTLE_LOGIN", default="10/min")},
+    "DEFAULT_THROTTLE_RATES": {
+        "login": env("THROTTLE_LOGIN", default="10/min"),
+        # Portal público (HU-19), por IP: ráfaga y sostenido.
+        "portal_minuto": env("THROTTLE_PORTAL_MINUTO", default="5/min"),
+        "portal_hora": env("THROTTLE_PORTAL_HORA", default="20/hour"),
+    },
+    # Proxies delante de Django (Nginx en producción = 1) para obtener la IP real del cliente.
+    "NUM_PROXIES": int(env("DJANGO_NUM_PROXIES", default=""))
+    if env("DJANGO_NUM_PROXIES", default="")
+    else None,
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
 }
+
+# Caché compartida en Redis: contadores de throttling coherentes entre procesos (Gunicorn, workers).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL", default="redis://localhost:6379/0"),
+        "KEY_PREFIX": "flotaagil",
+    }
+}
+
+# Portal (HU-19): máximo de solicitudes por teléfono y empresa en la ventana (alineado con RN-06).
+PORTAL_MAX_SOLICITUDES_POR_TELEFONO = env.int("PORTAL_MAX_SOLICITUDES_POR_TELEFONO", default=3)
+PORTAL_VENTANA_TELEFONO = timedelta(minutes=env.int("PORTAL_VENTANA_TELEFONO_MIN", default=15))
 
 # Geocodificador (DC-05): sin clave se usa el de desarrollo (determinístico, sin servicios externos).
 GOOGLE_GEOCODING_API_KEY = env("GOOGLE_GEOCODING_API_KEY", default="")
