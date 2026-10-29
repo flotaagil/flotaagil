@@ -6,6 +6,7 @@
 |---|---|
 | [`backlog/backlog.json`](backlog/backlog.json) | Product backlog: 25 HU + H-3 (178 SP) |
 | [`diccionario-datos.md`](diccionario-datos.md) | Diccionario de datos (Anexo D del Informe 2): fuente de los modelos del backend |
+| [`diccionario-cambios.md`](diccionario-cambios.md) | Agregados y desvíos respecto del Anexo D, para actualizar el informe |
 | [`sprint0.md`](sprint0.md) | Instrucciones del Sprint 0 (ecosistema GitHub) |
 | [`evidencias/`](evidencias/) | Evidencias de ejecución de casos de prueba (CP-xx) |
 
