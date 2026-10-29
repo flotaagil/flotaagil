@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 import pytest
 from django.core.management import CommandError, call_command
+from django.utils import timezone
 
 from apps.cuentas.models import ConfiguracionEmpresa, Empresa, Rol, Usuario
 
@@ -55,3 +58,81 @@ class TestDatosDemo:
         settings.DEBUG = True
         with pytest.raises(CommandError, match="contraseña"):
             call_command("datos_demo", password=None)
+
+
+@pytest.mark.django_db
+class TestDatosDemoPendientes:
+    """--pendientes completa hasta 2 solicitudes vigentes por empresa demo sin tocar la expiración."""
+
+    @staticmethod
+    def _vigentes(slug):
+        from apps.portal.demo import vigentes
+
+        return vigentes(Empresa.objects.get(slug=slug))
+
+    def test_sin_la_opcion_no_crea_solicitudes_extra(self, settings):
+        from apps.reservas.models import Viaje
+
+        settings.DEBUG = True
+        call_command("datos_demo", password="clave-demo-123")
+        call_command("datos_demo", password="clave-demo-123")
+        assert Viaje.objects.count() == 30
+
+    def test_completa_hasta_dos_vigentes_por_empresa(self, settings):
+        from apps.reservas.models import Canal, EstadoViaje, Viaje
+
+        settings.DEBUG = True
+        call_command("datos_demo", password="clave-demo-123")
+        # La carga inicial deja 2 pendientes recién creadas por empresa: no hace falta completar.
+        call_command("datos_demo", password="clave-demo-123", pendientes=True)
+        assert Viaje.objects.count() == 30
+        # Se vencen las de la carga inicial: ahora sí completa.
+        Viaje.objects.filter(estado=EstadoViaje.PENDIENTE_CONFIRMACION).update(
+            creado_en=timezone.now() - timedelta(hours=1)
+        )
+        call_command("datos_demo", password="clave-demo-123", pendientes=True)
+        assert Viaje.objects.count() == 34
+        for slug in ("transportes-andes", "taxi-pacifico"):
+            nuevas = self._vigentes(slug)
+            assert len(nuevas) == 2
+            for viaje in nuevas:
+                assert viaje.canal == Canal.WEB
+                assert viaje.pasajero.telefono.startswith("+5690019")
+                assert viaje.pasajero.privacidad_aceptada_en is not None
+                assert viaje.historial.get().actor == "PASAJERO"
+        # Idempotente mientras sigan vigentes.
+        call_command("datos_demo", password="clave-demo-123", pendientes=True)
+        assert Viaje.objects.count() == 34
+
+    def test_no_cambia_la_expiracion_real(self, settings):
+        from apps.reservas.expiracion import expirar_pendientes, vence_en
+        from apps.reservas.models import EstadoViaje, Viaje
+
+        settings.DEBUG = True
+        call_command("datos_demo", password="clave-demo-123")
+        Viaje.objects.filter(estado=EstadoViaje.PENDIENTE_CONFIRMACION).update(
+            creado_en=timezone.now() - timedelta(hours=1)
+        )
+        call_command("datos_demo", password="clave-demo-123", pendientes=True)
+        nuevas = self._vigentes("transportes-andes")
+        for viaje in nuevas:
+            plazo = viaje.empresa.configuracion.expiracion_verificacion_min
+            assert vence_en(viaje) == viaje.creado_en + timedelta(minutes=plazo)
+        # Pasado el plazo, la expiración normal las cancela.
+        despues = timezone.now() + timedelta(
+            minutes=nuevas[0].empresa.configuracion.expiracion_verificacion_min + 1
+        )
+        expirar_pendientes(ahora=despues)
+        assert not Viaje.objects.filter(estado=EstadoViaje.PENDIENTE_CONFIRMACION).exists()
+
+    def test_no_toca_empresas_que_no_son_demo(self, settings, empresa):
+        from apps.reservas.models import Viaje
+
+        settings.DEBUG = True
+        call_command("datos_demo", password="clave-demo-123", pendientes=True)
+        assert not Viaje.objects.filter(empresa=empresa).exists()
+
+    def test_no_corre_sin_debug(self, settings):
+        settings.DEBUG = False
+        with pytest.raises(CommandError, match="DEBUG"):
+            call_command("datos_demo", password="clave-demo-123", pendientes=True)

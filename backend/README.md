@@ -57,6 +57,8 @@ Comandos frecuentes (prefijo `docker compose -f infra/docker-compose.dev.yml`):
 
 El `.venv` local (`py -3.12 -m venv backend\.venv` + `pip install -r backend\requirements-dev.txt`) es solo para el editor; no hace falta GDAL en Windows.
 
+`datos_demo --pendientes` hace la carga normal y además completa hasta 2 solicitudes vigentes en PENDIENTE_CONFIRMACION por empresa demo (las de la carga inicial vencen a los 15 min). Usa datos ficticios, pasa por el mismo servicio que el portal y no cambia la expiración: el `programador` las cancela al vencer el plazo. Como todo el comando, solo corre con `DJANGO_DEBUG=true`.
+
 `datos_demo` es idempotente. Para volver a cargar todo desde cero hay que borrar la base (`down -v` y `up -d`): AUDITORIA es de solo inserción y no permite borrar los usuarios que la referencian.
 
 ## Reservas (HU-03)
