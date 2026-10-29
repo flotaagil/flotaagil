@@ -7,6 +7,7 @@ paths:
   /api/auth/app/refresh/:
     post:
       operationId: auth_app_refresh_create
+      description: 'Rota el refresh: el anterior queda en la lista negra.'
       summary: Renovar los tokens de la app del conductor
       tags:
       - auth
@@ -31,8 +32,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Tokens'
           description: ''
+        '400':
+          description: 'Datos inválidos: errores por campo.'
         '401':
-          description: Sin sesión válida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`sesion_invalida`: el refresh no sirve (vencido, usado, de
+            otro canal o usuario deshabilitado).'
   /api/auth/app/token/:
     post:
       operationId: auth_app_token_create
@@ -60,38 +68,96 @@ paths:
               schema:
                 $ref: '#/components/schemas/SesionApp'
           description: ''
+        '400':
+          description: 'Datos inválidos: errores por campo.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`credenciales_invalidas`, `cuenta_bloqueada` o `cuenta_deshabilitada`.'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`rol_no_permitido` (solo conductores).'
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`throttled`: demasiados intentos desde esta IP (THROTTLE_LOGIN).'
   /api/auth/logout/:
     post:
       operationId: auth_logout_create
+      description: Deja el refresh de la cookie en la lista negra y borra la cookie.
+        Responde 204 aunque no haya sesión. Exige que el navegador envíe Origin (o,
+        si falta, Referer) con un origen de PANEL_ORIGENES; el navegador lo pone solo.
       summary: Cerrar sesión del panel
       tags:
       - auth
-      security:
-      - {}
       responses:
         '204':
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: Borra `refresh_panel` (Max-Age=0, Path=/api/auth/).
           description: No response body
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`origen_no_permitido`: falta el encabezado Origin (y el Referer)
+            o no está en PANEL_ORIGENES.'
   /api/auth/refresh/:
     post:
       operationId: auth_refresh_create
+      description: Rota el refresh (el anterior queda en la lista negra). Los tokens
+        nuevos no superan el tope de la sesión. Exige que el navegador envíe Origin
+        (o, si falta, Referer) con un origen de PANEL_ORIGENES; el navegador lo pone
+        solo.
       summary: Renovar el access del panel con la cookie de refresh
       tags:
       - auth
-      security:
-      - {}
       responses:
         '200':
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: '`refresh_panel=<refresh>; HttpOnly; SameSite=Lax; Path=/api/auth/;
+                Max-Age=<segundos>` (Secure en producción). Max-Age no supera lo que
+                le queda a la sesión.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Access'
           description: ''
         '401':
-          description: Sin sesión válida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`sesion_invalida` o `sesion_expirada`. No trae Set-Cookie:
+            la cookie no se toca. El cliente debe tratar ambos códigos igual (volver
+            al login).'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`origen_no_permitido`: falta el encabezado Origin (y el Referer)
+            o no está en PANEL_ORIGENES.'
   /api/auth/token/:
     post:
       operationId: auth_token_create
-      description: Deja el refresh en la cookie httpOnly «refresh_panel».
+      description: Deja el refresh en la cookie httpOnly «refresh_panel» y emite la
+        sesión con su tope absoluto (JWT_SESION_MAX desde este login). Exige que el
+        navegador envíe Origin (o, si falta, Referer) con un origen de PANEL_ORIGENES;
+        el navegador lo pone solo.
       summary: Iniciar sesión en el panel web
       tags:
       - auth
@@ -100,22 +166,47 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/LoginRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
         required: true
-      security:
-      - {}
       responses:
         '200':
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: '`refresh_panel=<refresh>; HttpOnly; SameSite=Lax; Path=/api/auth/;
+                Max-Age=<segundos>` (Secure en producción). Max-Age no supera lo que
+                le queda a la sesión.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SesionPanel'
           description: ''
+        '400':
+          description: 'Datos inválidos: errores por campo.'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`credenciales_invalidas`, `cuenta_bloqueada` o `cuenta_deshabilitada`.'
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`rol_no_permitido` (el conductor usa la app) u `origen_no_permitido`.'
+        '415':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`unsupported_media_type`: el cuerpo debe ser application/json.'
+        '429':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: '`throttled`: demasiados intentos desde esta IP (THROTTLE_LOGIN).'
   /api/auth/yo/:
     get:
       operationId: auth_yo_retrieve
@@ -131,6 +222,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/UsuarioSesion'
           description: ''
+        '401':
+          description: Falta el access o no es válido (`token_not_valid`).
   /api/portal/{slug}/:
     get:
       operationId: portal_retrieve
@@ -569,6 +662,16 @@ components:
       - id
       - razon_social
       - slug
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+        code:
+          type: string
+      required:
+      - code
+      - detail
     EstadoViajeEnum:
       enum:
       - PENDIENTE_CONFIRMACION

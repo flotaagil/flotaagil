@@ -97,6 +97,28 @@ La verificación por WhatsApp está simulada (`apps/integraciones/notificaciones
 
 Access de 15 min y refresh de 12 h (`JWT_ACCESS_MIN`, `JWT_REFRESH_HORAS`). Al quinto intento fallido la cuenta se bloquea `LOGIN_BLOQUEO_MIN` minutos. En desarrollo la web usa el proxy de Vite (`/api` → `localhost:8000`) para quedar en el mismo origen que la cookie.
 
+Cada login emite el claim `canal` (`panel` o `app`) y cada refresh rechaza los tokens del otro canal. Los errores de estos endpoints llevan `code` además de `detail` (`credenciales_invalidas`, `cuenta_bloqueada`, `rol_no_permitido`, `origen_no_permitido`…).
+
+**Origen (anti-CSRF).** Login, refresh y logout del panel exigen que el navegador envíe `Origin` (o, si falta, `Referer`) con un origen de `PANEL_ORIGENES`; si no, 403 `origen_no_permitido`. La comparación es exacta y nunca contra `Host`: detrás de Nginx el resultado es el mismo, porque `Origin` y `Referer` llegan tal como los mandó el navegador (Nginx no debe reescribirlos). En desarrollo, `PANEL_ORIGENES=http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000` (Vite y Swagger); en producción, solo el https público (placeholder: `https://panel.flotaagil.example`). La app del conductor no usa estos endpoints y no se le exige origen. Los tres solo aceptan JSON (form → 415).
+
+**Refresh rechazado.** Responde 401 sin `Set-Cookie`: la cookie solo la borra el logout. Así, si dos pestañas renuevan a la vez, la respuesta tardía de la que perdió no borra la cookie que la otra ya renovó. Las renovaciones del mismo usuario se ponen en serie con un bloqueo de su fila, así que dos peticiones con el mismo refresh no pueden ganar las dos.
+
+**Tope de la sesión del panel.** Desde el login, la sesión dura a lo más `JWT_SESION_MAX_HORAS` (12) aunque se renueve: el login guarda `sesion_inicio` en el refresh, la rotación lo conserva y limita la expiración del access, del refresh y el `Max-Age` de la cookie a lo que queda. Desde las 12 h el refresh responde 401 `sesion_expirada`; si simplejwt lo rechaza antes por su `exp`, responde `sesion_invalida`. **El frontend debe tratar ambos códigos igual (volver al login) y no depender de recibir `sesion_expirada`.** La app del conductor mantiene su rotación deslizante de 12 h.
+
+**Sesiones anteriores.** Los refresh emitidos antes de existir el claim `canal` reciben 401 `sesion_invalida`: hay que volver a iniciar sesión.
+
+Prueba rápida con curl (desarrollo):
+
+```
+curl -i -X POST http://localhost:8000/api/auth/token/ -H "Origin: http://localhost:5173" \
+     -H "Content-Type: application/json" -c cookies.txt \
+     -d '{"email": "despacho@transportes-andes.example", "password": "<DATOS_DEMO_PASSWORD>"}'
+curl -i -X POST http://localhost:8000/api/auth/refresh/ -H "Origin: http://localhost:5173" -b cookies.txt -c cookies.txt
+curl -i -X POST http://localhost:8000/api/auth/logout/  -H "Origin: http://localhost:5173" -b cookies.txt
+```
+
+Sin `-H "Origin: …"` las tres responden 403.
+
 ## Producción detrás de Nginx
 
 En producción hay **exactamente un proxy** delante de Django: Nginx en la instancia EC2, sin balanceador ni CDN. Con esa topología es obligatorio:
@@ -127,3 +149,11 @@ location /api/ {
 2. No usar el módulo `real_ip` con `set_real_ip_from` amplio: convertiría `$remote_addr` en un valor del cliente.
 3. No usar `$http_x_forwarded_for` solo: copia lo del cliente sin agregar la IP real.
 4. Si cambia la topología, cambia el número. Con un balanceador delante de Nginx serían 2 proxies; dejar 1 haría que todos los clientes compartan la IP del balanceador, y poner 2 con un solo proxy volvería a tomar un valor del cliente.
+
+### Revisión antes de desplegar
+
+```
+python manage.py check --deploy --fail-level WARNING
+```
+
+Además de las revisiones de Django, avisa si `DJANGO_NUM_PROXIES` está vacío (`flotaagil.W001`), si `PANEL_ORIGENES` está vacío (`W002`) o incluye orígenes sin https (`W003`). Un `PANEL_ORIGENES` mal formado es un error en cualquier entorno (`flotaagil.E001`). En desarrollo (`DEBUG=true`) los avisos de despliegue no aparecen.
