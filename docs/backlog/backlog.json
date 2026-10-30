@@ -44,7 +44,7 @@
       "epica": "Gestión y despacho",
       "label_epica": "epica:gestion-despacho",
       "historia": "Como despachador, quiero ingresar, editar y cancelar reservas, para mantener un registro único de solicitudes propias, del portal y de convenios.",
-      "criterios": "Formulario validado; edición antes del despacho; cancelación con motivo. Incluye sentido del trayecto (desde/hacia aeropuerto, urbano) y número de vuelo opcional.",
+      "criterios": "Formulario validado: pasajero y teléfono E.164, origen y destino geocodificados (el origen dentro de la zona de operación), recogida futura en hora de Chile (rechaza las horas inexistentes del cambio de horario y pide elegir la ocurrencia en las repetidas) y sentido del trayecto (desde/hacia el aeropuerto, urbano). Número de vuelo opcional solo en viajes desde el aeropuerto, con formato IATA y hora programada de llegada. Canal Teléfono o WhatsApp desde el panel. Listado con filtros (estado, día, rango, sentido, canal, búsqueda y orden) guardados en la URL, vista por defecto desde hoy y paginación de 25; detalle con historial de estados. Edición solo antes del despacho (PENDIENTE_CONFIRMACION o SOLICITADO), sin cambiar pasajero ni canal (PR-03). Cancelación con motivo obligatorio desde PENDIENTE_CONFIRMACION, SOLICITADO, ACEPTADO, EN_CAMINO o EN_ZONA, con historial y auditoría. Solo administrador y despachador, y solo reservas de su empresa (RN-13).",
       "prioridad": "Alta",
       "sp": 8,
       "sprint": "Sprint 1",
@@ -311,7 +311,7 @@
       "epica": "Módulo pasajero",
       "label_epica": "epica:modulo-pasajero",
       "historia": "Como pasajero, quiero solicitar un viaje desde un formulario web sin crear cuenta, indicando nombre, WhatsApp, origen, destino y vuelo si corresponde.",
-      "criterios": "Formulario público validado; aviso de privacidad y aceptación de avisos por WhatsApp; confirmación visual de solicitud recibida.",
+      "criterios": "Formulario público en /solicitar/{slug}, sin cuenta ni sesión y pensado primero para celular: nombre, WhatsApp en formato internacional (acepta números extranjeros; sugiere +56 a un celular chileno escrito sin prefijo, sin cambiarlo solo), origen, destino, sentido y vuelo con hora de llegada solo desde el aeropuerto. Recogida en hora de Chile con la anticipación mínima de la empresa; con vuelo y sin recogida se calcula como llegada + margen (RN-17). Aceptación obligatoria del aviso de privacidad y de los avisos por WhatsApp (texto provisional, PR-04). Protección con campo trampa, límite por IP holgado (wifi del aeropuerto) y límite por teléfono, con mensajes distintos. Confirmación visual de solicitud recibida con lo pedido y el plazo para confirmar por WhatsApp, sin número de reserva. Empresa inexistente o inactiva: página clara. Solo en español (PR-05).",
       "prioridad": "Alta",
       "sp": 8,
       "sprint": "Sprint 1",
@@ -345,7 +345,8 @@
         "CP-09"
       ],
       "depende_de": [],
-      "estado_cambio": "Modificada (SMS OTP → WhatsApp; 8→5 SP)"
+      "estado_cambio": "Modificada (SMS OTP → WhatsApp; 8→5 SP)",
+      "avance": "Parcial (feat/HU-19-portal). Hecho: la solicitud del portal queda en PENDIENTE_CONFIRMACION y se cancela al vencer el plazo de su empresa (expiracion_verificacion_min, 15 min por defecto) con el comando expirar_pendientes, que el servicio programador del compose ejecuta cada 60 s (actor SISTEMA, motivo RN-06, idempotente); máximo 3 solicitudes por número y empresa cada 15 min (429 con code limite_telefono desde feat/HU-19-web). El aviso de verificación por WhatsApp está simulado (log con el número enmascarado). Falta: plantilla de Twilio con botones Confirmar/Cancelar, webhook idempotente, paso a SOLICITADO al confirmar y llevar la expiración a Celery beat."
     },
     {
       "id": "HU-21",
@@ -429,7 +430,8 @@
         "CP-11"
       ],
       "depende_de": [],
-      "estado_cambio": "Nueva (CC-02)"
+      "estado_cambio": "Nueva (CC-02)",
+      "avance": "Parcial. Panel (feat/HU-03-reservas, feat/HU-03-web): número de vuelo con formato IATA y hora programada de llegada, solo en viajes desde el aeropuerto (DC-06); al editar se conserva si no se toca. Portal (feat/HU-19-portal, feat/HU-19-web): número y hora de llegada para calcular la recogida (RN-17). Falta: la consulta inicial a la API de vuelos para confirmar que el vuelo existe en la fecha (adaptador FlightAware / AeroDataBox) y los vuelos hacia el aeropuerto (salidas), que el criterio incluye y DC-06 dejó fuera."
     },
     {
       "id": "HU-27",
@@ -531,6 +533,52 @@
       "sprint": "Sprint 1",
       "responsable": "Renato",
       "descripcion": "Hito H-3, riesgo R-01. Primera tarea del Sprint 1: validar Capacitor + background-geolocation en Android 10+ con la pantalla apagada y la app en segundo plano. Resultado: informe técnico corto en docs/ con teléfonos probados, frecuencia lograda, consumo de batería y datos. Bloquea HU-02, HU-04 y HU-29."
+    }
+  ],
+  "casos_prueba": [
+    {
+      "id": "CP-05",
+      "historia": "HU-03",
+      "titulo": "Ingresar y editar una reserva desde el panel",
+      "descripcion": "Ingresar: la reserva queda en SOLICITADO con su primer registro de historial (actor despachador o administrador), origen y destino geocodificados, y el pasajero se reutiliza por teléfono dentro de la empresa. Se rechazan: recogida pasada, origen fuera de la zona de operación, dirección que no se geocodifica, vuelo en un viaje que no es desde el aeropuerto, número de vuelo con formato inválido y canal WEB desde el panel; canal CONVENIO exige un convenio activo de la empresa. Editar: solo en PENDIENTE_CONFIRMACION o SOLICITADO (409 después del despacho); cambiar una dirección la vuelve a geocodificar; el vuelo se agrega o se quita y se conserva si se edita otro campo. En el panel: el vuelo solo aparece desde el aeropuerto, los 400 se muestran en cada campo, la hora inexistente se rechaza y la repetida pide la ocurrencia, y la edición envía solo los campos modificados.",
+      "pruebas": [
+        "backend/apps/reservas/tests/test_api.py (TestIngresar, TestEditar)",
+        "web/src/reservas/formulario.test.ts",
+        "web/src/reservas/formulario-ui.test.tsx"
+      ],
+      "ramas": [
+        "feat/HU-03-reservas",
+        "feat/HU-03-web"
+      ]
+    },
+    {
+      "id": "CP-06",
+      "historia": "HU-03",
+      "titulo": "Cancelar una reserva con motivo",
+      "descripcion": "Se cancela desde PENDIENTE_CONFIRMACION, SOLICITADO, ACEPTADO, EN_CAMINO o EN_ZONA: el estado pasa a CANCELADO con el motivo, el historial registra el cambio y queda un registro de auditoría; el origen de la cancelación es DESPACHADOR o ADMINISTRADOR según quien cancela. El motivo es obligatorio. En ASIGNADO, PASAJERO_A_BORDO, FINALIZADO o CANCELADO responde 409. En el panel: diálogo con motivo obligatorio (máximo 200 caracteres) que es la confirmación; un 409 muestra el estado real y el listado se actualiza.",
+      "pruebas": [
+        "backend/apps/reservas/tests/test_api.py (TestCancelar)",
+        "web/src/reservas/detalle.test.tsx"
+      ],
+      "ramas": [
+        "feat/HU-03-reservas",
+        "feat/HU-03-web"
+      ]
+    },
+    {
+      "id": "CP-07",
+      "historia": "HU-19",
+      "titulo": "Solicitar un viaje desde el formulario público",
+      "descripcion": "Sin autenticación, la solicitud crea la reserva en PENDIENTE_CONFIRMACION (canal WEB, actor PASAJERO) y responde el plazo para confirmar por WhatsApp según la configuración de la empresa; registra las aceptaciones de privacidad y WhatsApp, que son obligatorias. Acepta teléfonos extranjeros en E.164. Exige la anticipación mínima de la empresa. Con vuelo desde el aeropuerto y sin recogida, la recogida es la llegada + margen. Rechaza el vuelo en viajes hacia el aeropuerto. Responde 429 con code limite_telefono (3 solicitudes por número y empresa cada 15 min) o limite_ip. Con el campo trampa lleno responde como si nada, sin crear la reserva. Empresa inexistente o inactiva: 404. En el portal: sin llamadas a la sesión, sugerencia +56, horas en hora de Chile en distintas zonas del navegador, errores por campo y «No sabemos si tu solicitud llegó» cuando no hay respuesta.",
+      "pruebas": [
+        "backend/apps/portal/tests/test_portal.py",
+        "web/src/portal/portal.test.tsx",
+        "web/src/portal/telefono.test.ts"
+      ],
+      "ramas": [
+        "feat/HU-19-portal",
+        "feat/HU-19-web"
+      ]
     }
   ]
 }
