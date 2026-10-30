@@ -2,14 +2,16 @@
 límite por teléfono y un campo trampa."""
 
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
+from apps.comun.excepciones import error_con_codigo
 from apps.cuentas.models import Empresa
+from apps.cuentas.serializers import ErrorSerializer
 
 from . import servicios
 from .serializers import EmpresaPublicaSerializer, SolicitudRespuestaSerializer, SolicitudSerializer
@@ -31,6 +33,10 @@ class _VistaPortal(APIView):
     authentication_classes: list = []
     permission_classes = [AllowAny]
 
+    def get_exception_handler(self):
+        # Los errores con solo `detail` llevan `code` (p. ej. limite_ip / limite_telefono en el 429).
+        return error_con_codigo
+
 
 class EmpresaPortalView(_VistaPortal):
     @extend_schema(
@@ -45,8 +51,30 @@ class EmpresaPortalView(_VistaPortal):
         return Response(EmpresaPublicaSerializer(_empresa(slug)).data)
 
 
+LIMITE = OpenApiResponse(
+    response=ErrorSerializer,
+    description=(
+        "Demasiadas solicitudes. `code`: `limite_ip` (desde la misma IP; con el wifi del aeropuerto muchos "
+        "pasajeros la comparten) o `limite_telefono` (varias solicitudes con el mismo número)."
+    ),
+    examples=[
+        OpenApiExample(
+            "Por IP",
+            value={"detail": servicios.LimiteIP.default_detail, "code": "limite_ip"},
+        ),
+        OpenApiExample(
+            "Por teléfono",
+            value={"detail": servicios.LimiteTelefono.default_detail, "code": "limite_telefono"},
+        ),
+    ],
+)
+
+
 class SolicitudPortalView(_VistaPortal):
     throttle_classes = [PortalPorMinuto, PortalPorHora]
+
+    def throttled(self, request, wait):
+        raise servicios.LimiteIP(wait)
 
     @extend_schema(
         tags=["portal"],
@@ -55,7 +83,7 @@ class SolicitudPortalView(_VistaPortal):
         responses={
             201: SolicitudRespuestaSerializer,
             404: OpenApiResponse(description="Empresa inexistente o inactiva"),
-            429: OpenApiResponse(description="Demasiadas solicitudes desde la IP o con el mismo teléfono"),
+            429: LIMITE,
         },
         description=(
             "Crea la reserva en PENDIENTE_CONFIRMACION. Se confirma respondiendo el WhatsApp (HU-20) "

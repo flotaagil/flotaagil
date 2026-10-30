@@ -81,10 +81,12 @@ Sin autenticación. La empresa se identifica por su `slug` (DC-01).
 
 | Operación | Endpoint | Notas |
 |---|---|---|
-| Datos de la empresa | `GET /api/portal/{slug}/` | Razón social, anticipación mínima y plazo de verificación; 404 si no existe o está inactiva |
+| Datos de la empresa | `GET /api/portal/{slug}/` | Razón social, anticipación mínima, plazo de verificación y margen del aeropuerto (`margen_nacional_min`); 404 si no existe o está inactiva |
 | Solicitar viaje | `POST /api/portal/{slug}/solicitudes/` | Queda en PENDIENTE_CONFIRMACION; responde `expira_en` |
 
 Protección: throttling por IP (`THROTTLE_PORTAL_MINUTO`, `THROTTLE_PORTAL_HORA`; caché en Redis), máximo de solicitudes por teléfono y empresa (`PORTAL_MAX_SOLICITUDES_POR_TELEFONO` en `PORTAL_VENTANA_TELEFONO_MIN`), campo trampa `sitio_web` y anticipación mínima por empresa (DC-10). Desde el aeropuerto, si no viene `recogida_en` se calcula como llegada del vuelo + margen nacional (RN-17, DC-12).
+
+**Límites y 429.** El 429 lleva `code` para que el portal explique el caso: `limite_ip` (throttling por IP) o `limite_telefono` (varias solicitudes con el mismo número). Los límites por IP son holgados a propósito, **20/min y 200/hour** por defecto: con el wifi del aeropuerto (o cualquier NAT) muchos pasajeros comparten la misma IP pública, y un límite estricto bloquearía a pasajeros legítimos. El control principal contra abusos es el **límite por teléfono** (3 solicitudes cada 15 min por empresa), que además coincide con lo que cuesta cada solicitud: un WhatsApp de verificación.
 
 La verificación por WhatsApp está simulada (`apps/integraciones/notificaciones.py`, solo deja un log con el número enmascarado); Twilio es HU-20. Las solicitudes no confirmadas se cancelan al vencer el plazo (RN-06) con `python manage.py expirar_pendientes`, que el servicio `programador` del compose ejecuta cada 60 s.
 

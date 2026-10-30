@@ -18,6 +18,22 @@ MENSAJE = (
 )
 
 
+class LimiteIP(Throttled):
+    """429 por IP (throttling de DRF). El `code` permite al portal explicar el caso sin leer el texto."""
+
+    default_code = "limite_ip"
+    default_detail = (
+        "Se enviaron demasiadas solicitudes desde esta conexión. Espera un momento e intenta de nuevo."
+    )
+
+
+class LimiteTelefono(Throttled):
+    """429 por teléfono: demasiadas solicitudes con el mismo número en la ventana."""
+
+    default_code = "limite_telefono"
+    default_detail = "Ya enviaste varias solicitudes con este número. Espera unos minutos e intenta de nuevo."
+
+
 def _verificar_limite_telefono(empresa, telefono: str) -> None:
     """Máximo de solicitudes por número y empresa en la ventana (alineado con RN-06: 3 cada 15 min)."""
     desde = timezone.now() - settings.PORTAL_VENTANA_TELEFONO
@@ -25,10 +41,7 @@ def _verificar_limite_telefono(empresa, telefono: str) -> None:
         empresa=empresa, canal=Canal.WEB, pasajero__telefono=telefono, creado_en__gte=desde
     ).count()
     if recientes >= settings.PORTAL_MAX_SOLICITUDES_POR_TELEFONO:
-        raise Throttled(
-            wait=settings.PORTAL_VENTANA_TELEFONO.total_seconds(),
-            detail="Ya enviaste varias solicitudes con este número. Espera unos minutos e intenta de nuevo.",
-        )
+        raise LimiteTelefono(wait=settings.PORTAL_VENTANA_TELEFONO.total_seconds())
 
 
 def _hora_de_recogida(datos: dict, config):

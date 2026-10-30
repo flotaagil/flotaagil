@@ -99,9 +99,10 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 25,
     "DEFAULT_THROTTLE_RATES": {
         "login": env("THROTTLE_LOGIN", default="10/min"),
-        # Portal público (HU-19), por IP: ráfaga y sostenido.
-        "portal_minuto": env("THROTTLE_PORTAL_MINUTO", default="5/min"),
-        "portal_hora": env("THROTTLE_PORTAL_HORA", default="20/hour"),
+        # Portal público (HU-19), por IP: ráfaga y sostenido. Holgados porque en el aeropuerto muchos
+        # pasajeros comparten IP (wifi, NAT); el control principal es el límite por teléfono.
+        "portal_minuto": env("THROTTLE_PORTAL_MINUTO", default="20/min"),
+        "portal_hora": env("THROTTLE_PORTAL_HORA", default="200/hour"),
     },
     # Proxies delante de Django (Nginx en producción = 1) para obtener la IP real del cliente.
     "NUM_PROXIES": int(env("DJANGO_NUM_PROXIES", default=""))

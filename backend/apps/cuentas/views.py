@@ -19,14 +19,15 @@ import contextlib
 from django.conf import settings
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.exceptions import APIException
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
-from rest_framework.views import APIView, exception_handler
+from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from apps.comun.excepciones import error_con_codigo
 
 from .autenticacion import (
     CANAL_APP,
@@ -113,20 +114,12 @@ NOTA_ORIGEN = (
 )
 
 
-def _error_con_codigo(exc, context):
-    """Manejador de DRF que agrega `code` a los errores con solo `detail` (401, 403, 415, 429)."""
-    respuesta = exception_handler(exc, context)
-    if respuesta is not None and isinstance(exc, APIException) and set(respuesta.data) == {"detail"}:
-        respuesta.data["code"] = respuesta.data["detail"].code
-    return respuesta
-
-
 class _VistaAuth(APIView):
     authentication_classes: list = []
     permission_classes = [AllowAny]
 
     def get_exception_handler(self):
-        return _error_con_codigo
+        return error_con_codigo
 
     def get_authenticate_header(self, request):
         # Sin autenticadores DRF respondería 403 a las credenciales inválidas; deben ser 401.

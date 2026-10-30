@@ -288,6 +288,8 @@ export interface components {
             slug: string;
             anticipacion_minima_min: number;
             expiracion_verificacion_min: number;
+            /** @description Minutos que se suman a la llegada del vuelo cuando no se indica la recogida (RN-17). */
+            margen_nacional_min: number;
         };
         EmpresaResumen: {
             readonly id: number;
@@ -882,12 +884,14 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Demasiadas solicitudes desde la IP o con el mismo teléfono */
+            /** @description Demasiadas solicitudes. `code`: `limite_ip` (desde la misma IP; con el wifi del aeropuerto muchos pasajeros la comparten) o `limite_telefono` (varias solicitudes con el mismo número). */
             429: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
         };
     };

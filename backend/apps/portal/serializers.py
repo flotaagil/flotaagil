@@ -8,10 +8,20 @@ from apps.reservas.models import Sentido
 class EmpresaPublicaSerializer(serializers.ModelSerializer):
     anticipacion_minima_min = serializers.IntegerField(source="configuracion.anticipacion_minima_min")
     expiracion_verificacion_min = serializers.IntegerField(source="configuracion.expiracion_verificacion_min")
+    margen_nacional_min = serializers.IntegerField(
+        source="configuracion.margen_nacional_min",
+        help_text="Minutos que se suman a la llegada del vuelo cuando no se indica la recogida (RN-17).",
+    )
 
     class Meta:
         model = Empresa
-        fields = ["razon_social", "slug", "anticipacion_minima_min", "expiracion_verificacion_min"]
+        fields = [
+            "razon_social",
+            "slug",
+            "anticipacion_minima_min",
+            "expiracion_verificacion_min",
+            "margen_nacional_min",
+        ]
 
 
 class VueloLlegadaSerializer(serializers.Serializer):

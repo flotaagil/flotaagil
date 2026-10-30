@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 
 import pytest
+from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -43,7 +44,14 @@ class TestEmpresaPublica:
             "slug": empresa.slug,
             "anticipacion_minima_min": 30,
             "expiracion_verificacion_min": 15,
+            "margen_nacional_min": 20,
         }
+
+    def test_margen_configurable(self, cliente, empresa):
+        empresa.configuracion.margen_nacional_min = 45
+        empresa.configuracion.save()
+        respuesta = cliente.get(reverse("portal-empresa", args=[empresa.slug]))
+        assert respuesta.data["margen_nacional_min"] == 45
 
     def test_empresa_inexistente_o_inactiva(self, cliente, empresa):
         assert cliente.get(reverse("portal-empresa", args=["no-existe"])).status_code == 404
@@ -219,6 +227,8 @@ class TestProteccion:
             )
         respuesta = cliente.post(url(empresa), solicitud(), format="json")
         assert respuesta.status_code == 429
+        assert respuesta.data["code"] == "limite_telefono"
+        assert respuesta.data["detail"].startswith("Ya enviaste varias solicitudes con este número.")
         assert Viaje.objects.count() == 3
 
     def test_el_limite_por_telefono_es_por_empresa(self, cliente, empresa, otra_empresa):
@@ -235,12 +245,18 @@ class TestProteccion:
         assert cliente.post(url(empresa), solicitud(), format="json").status_code == 201
 
     def test_limite_por_ip_por_minuto(self, cliente, empresa):
-        codigos = [
-            cliente.post(url(empresa), solicitud(telefono=f"+5690000920{i}"), format="json").status_code
-            for i in range(6)
+        # El máximo sale de la configuración (20/min por defecto; THROTTLE_PORTAL_MINUTO lo cambia).
+        maximo = int(settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["portal_minuto"].split("/")[0])
+        respuestas = [
+            cliente.post(url(empresa), solicitud(telefono=f"+56900{i:06d}"), format="json")
+            for i in range(maximo + 1)
         ]
-        assert codigos[:5] == [201] * 5
-        assert codigos[5] == 429
+        assert [r.status_code for r in respuestas[:maximo]] == [201] * maximo
+        assert respuestas[maximo].status_code == 429
+        limitada = respuestas[maximo].data
+        assert limitada["code"] == "limite_ip"
+        assert limitada["detail"].startswith("Se enviaron demasiadas solicitudes desde esta conexión.")
+        assert "Retry-After" in respuestas[maximo]
 
     def test_campo_trampa(self, cliente, empresa, caplog):
         respuesta = cliente.post(url(empresa), solicitud(sitio_web="http://spam.example"), format="json")

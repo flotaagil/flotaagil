@@ -285,7 +285,26 @@ paths:
         '404':
           description: Empresa inexistente o inactiva
         '429':
-          description: Demasiadas solicitudes desde la IP o con el mismo teléfono
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                PorIP:
+                  value:
+                    detail: Se enviaron demasiadas solicitudes desde esta conexión.
+                      Espera un momento e intenta de nuevo.
+                    code: limite_ip
+                  summary: Por IP
+                PorTeléfono:
+                  value:
+                    detail: Ya enviaste varias solicitudes con este número. Espera
+                      unos minutos e intenta de nuevo.
+                    code: limite_telefono
+                  summary: Por teléfono
+          description: 'Demasiadas solicitudes. `code`: `limite_ip` (desde la misma
+            IP; con el wifi del aeropuerto muchos pasajeros la comparten) o `limite_telefono`
+            (varias solicitudes con el mismo número).'
   /api/viajes/:
     get:
       operationId: viajes_list
@@ -640,9 +659,14 @@ components:
           type: integer
         expiracion_verificacion_min:
           type: integer
+        margen_nacional_min:
+          type: integer
+          description: Minutos que se suman a la llegada del vuelo cuando no se indica
+            la recogida (RN-17).
       required:
       - anticipacion_minima_min
       - expiracion_verificacion_min
+      - margen_nacional_min
       - razon_social
       - slug
     EmpresaResumen:
