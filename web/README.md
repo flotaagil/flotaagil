@@ -9,7 +9,7 @@ Interfaz web de FlotaÁgil.
 
 Stack: Node 22 LTS, TypeScript 5, React 19 + Vite 6, React Router 7, TanStack Query 5, React Hook Form + Zod, CSS Modules, openapi-fetch con tipos generados desde `backend/openapi.yaml`. Pruebas con Vitest + Testing Library; ESLint.
 
-Hoy tiene la infraestructura compartida (cliente de la API, sesión, login, layout) y las pantallas de reservas de HU-03: listado con filtros, detalle con historial, crear, editar y cancelar. El formulario público llega en `feat/HU-19-web`.
+Hoy tiene la infraestructura compartida (cliente de la API, sesión, login, layout), las pantallas de reservas de HU-03 (listado con filtros, detalle con historial, crear, editar y cancelar) y el portal público del pasajero de HU-19 (`/solicitar/{slug}`).
 
 ## Desarrollo
 
@@ -25,7 +25,7 @@ npm run dev          # http://localhost:5173 ; /api → http://localhost:8000 (p
 |---|---|
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest con cobertura; exige ≥ 70 % en `src/sesion`, `src/api`, `src/hora` y `src/reservas` (configurado en `vite.config.ts`, así que también aplica a `npx vitest run` del CI) |
+| `npm test` | Vitest con cobertura; exige ≥ 70 % en `src/sesion`, `src/api`, `src/hora`, `src/reservas`, `src/portal`, `src/formularios` y `src/entorno.ts` (configurado en `vite.config.ts`, así que también aplica a `npx vitest run` del CI) |
 | `npm run build` | Typecheck, build de producción en `dist/` y `scripts/verificar-carga.mjs` (carga diferida, ver abajo) |
 | `npm run gen:api` | Regenera `src/api/esquema.d.ts` desde `../backend/openapi.yaml`. Se versiona: después de regenerar no debe haber diferencias |
 
@@ -38,13 +38,16 @@ Para **cambiar dependencias** (`npm install <paquete>`), npm 10 (el que trae Nod
 ```
 src/api/        cliente tipado (openapi-fetch), llamadas de auth, mensajes de error por código
 src/sesion/     sesión: access en memoria, renovación, logout, marca de logout pendiente
+src/entorno.ts  lo que se usa del navegador (fetch, locks, almacén, canal, hora), reemplazable en pruebas
 src/hora/       horas en America/Santiago (conversión y formato), compartido por panel y portal
+src/formularios/ Campo y CampoFechaHora (compartidos por panel y portal)
 src/reservas/   HU-03: llamadas y caché, filtros, formulario, errores, pantallas
+src/portal/     HU-19: portal público del pasajero (sin sesión)
 src/rutas/      tabla de rutas (router, menú, guarda por rol y validación de `volver`)
 src/componentes/ layout y piezas comunes (sin conexión, error de carga)
 src/paginas/    login, inicio, sin permiso, no encontrada
 src/estilos/    tokens (colores, espacios, modo oscuro) y estilos globales
-src/pruebas/    servidores falsos (auth y reservas) y piezas falsas del navegador para Vitest
+src/pruebas/    servidores falsos (auth, reservas y portal) y piezas falsas del navegador para Vitest
 scripts/        verificar-carga.mjs (se ejecuta al final del build)
 ```
 
@@ -78,7 +81,13 @@ La tabla `src/rutas/tabla.tsx` define las pantallas con su título, si van al me
 
 ### Carga diferida
 
-Todas las pantallas se cargan con `lazy`; el paquete inicial lleva solo el router, la sesión y el marco. Si un chunk no se puede descargar (p. ej. tras un despliegue), se muestra «Hay una versión nueva del panel» con Recargar. `npm run build` termina con `scripts/verificar-carga.mjs`, que lee `dist/.vite/modulos.json` (lo escribe un plugin de `vite.config.ts`) y falla si una pantalla no es lazy o si el paquete inicial o una ruta pública (login, no encontrada) cargan, por imports estáticos, algún módulo de `src/reservas/`.
+Todo se carga con `lazy`. El paquete inicial lleva solo el router y los contextos (`Entorno` y la tabla de rutas): **la sesión no está en él**. Una raíz de sesión (`src/sesion/RaizSesion.tsx`, lazy) envuelve `/login` y el panel; mientras se navega entre ellos la sesión se conserva, y fuera de ellos (portal, página no encontrada) no existe. Si un chunk no se puede descargar (p. ej. tras un despliegue), se muestra «Hay una versión nueva del panel» con Recargar.
+
+`npm run build` termina con `scripts/verificar-carga.mjs`, que lee `dist/.vite/modulos.json` (lo escribe un plugin de `vite.config.ts`), sigue los imports estáticos desde cada punto de partida e imprime qué módulos propios carga cada uno. Falla si:
+
+- una raíz o pantalla no es lazy;
+- el paquete inicial, la página no encontrada o el portal (`/solicitar`) cargan algo del panel o de la sesión (`src/sesion/`, `src/reservas/`, `api/cliente.ts`, `api/auth.ts`, `Layout`, `RutaAutenticada`, `Login`, `Inicio`), también a través de componentes compartidos;
+- el login carga algo de `src/reservas/` o de `src/portal/`.
 
 ## Horas (America/Santiago)
 
@@ -98,6 +107,18 @@ Las horas se ingresan y se muestran en hora de Santiago, sin depender de la zona
 - **Cancelar**: motivo obligatorio (hasta 200 caracteres) en un diálogo que es la confirmación.
 - Los 400 del backend se muestran en cada campo; si la creación falla sin respuesta, se avisa que no se sabe si quedó creada.
 - **Caché** (TanStack Query): `['viajes', 'lista', consulta]` y `['viajes', 'detalle', id]`. Crear, editar y cancelar dejan el detalle nuevo en la caché e invalidan los listados; un 409 invalida el detalle y los listados.
+
+## Portal del pasajero (HU-19)
+
+Ruta pública `/solicitar/{slug}` (y `/solicitar/{slug}/privacidad`), sin sesión ni refresh silencioso: no llama a `/api/auth/` ni usa Web Locks o BroadcastChannel. Carga la empresa con `GET /api/portal/{slug}/`; si no existe o está inactiva (404), muestra «Esta página de solicitudes no está disponible».
+
+- **Celular primero**: una columna, campos de 44 px, teclados adecuados (`type="tel"`, `autocomplete`), opciones grandes y el botón «Solicitar viaje» fijo abajo. En escritorio, una tarjeta centrada.
+- **Teléfono**: acepta números de cualquier país (turistas). Un número sin `+` de 9 dígitos que empieza con 9 **no se completa solo** (es también el formato de los celulares de Perú y de fijos de España): aparece la sugerencia de un toque «¿Es un celular de Chile? Usar +56 9 …», y si no se acepta se pide el código de país.
+- **Horas**: en hora de Chile con `src/hora/` (inexistentes y repetidas, como en el panel), respetando la anticipación mínima de la empresa (el backend tiene la última palabra). Desde el aeropuerto con vuelo, la recogida es opcional: se calcula como «llegada + N min» (`margen_nacional_min`).
+- **Aceptaciones** de privacidad y de WhatsApp obligatorias. El aviso de privacidad se lee en un desplegable junto a la aceptación y en su página; es un **texto provisional** (PR-04). Solo español (PR-05).
+- **Campo trampa** `sitio_web`: fuera de pantalla, `aria-hidden` y `tabIndex=-1`; se envía siempre vacío.
+- **Errores**: los 400 en cada campo; el 429 según su `code` (`limite_ip`, `limite_telefono`) o su `detail`. Sin respuesta, o con un 5xx, el POST pudo haberse aplicado: se muestra «No sabemos si tu solicitud llegó» y reenviar pide confirmación (podría quedar duplicada).
+- **Confirmación** en la misma ruta: lo pedido, la recogida y el plazo para confirmar por WhatsApp (`expira_en`) en hora de Chile, sin número de reserva (la API no lo devuelve). No se guarda nada en el navegador: con F5 se vuelve al formulario vacío.
 
 ## Producción (solo documentado)
 
