@@ -1,4 +1,4 @@
-import type { Almacen } from './entorno';
+import type { Almacen } from '../entorno';
 
 export const CLAVE_LOGOUT_PENDIENTE = 'flotaagil.logout_pendiente';
 

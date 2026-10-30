@@ -1,4 +1,4 @@
-import type { Entorno } from '../sesion/entorno';
+import type { Entorno } from '../entorno';
 import { crearSesion, type Sesion } from '../sesion/sesion';
 
 /** Sesión con el canal entre pestañas y el oyente de `online` activos, como la monta SesionProvider. */

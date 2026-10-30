@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Aviso } from '../../componentes/Aviso';
 import { formatearFecha, formatearFechaHora, formatearPared } from '../../hora/hora';
-import { ErrorApi, useViajes, type Canal, type EstadoViaje, type Sentido } from '../api';
+import { ErrorApi } from '../../api/resultado';
+import { useViajes, type Canal, type EstadoViaje, type Sentido } from '../api';
 import { EstadoEtiqueta } from '../componentes/EstadoEtiqueta';
 import { mensajeDeErrorApi } from '../errores';
 import { CANALES, ESTADOS, ORDEN_ESTADOS, ORDENES, SENTIDOS, type Orden } from '../etiquetas';
@@ -16,6 +17,7 @@ import {
   SIN_FILTROS,
   type Filtros,
 } from '../filtros';
+import campos from '../../formularios/formularios.module.css';
 import estilos from '../reservas.module.css';
 
 const ESPERA_BUSQUEDA_MS = 300;
@@ -101,7 +103,7 @@ export function Listado() {
           Filtros{chips.length ? ` (${chips.length})` : ''}
         </button>
         <div id="campos-filtro" className={estilos.camposFiltro} data-abierto={filtrosAbiertos} role="search">
-          <label className={`${estilos.campo} ${estilos.busqueda}`}>
+          <label className={`${campos.campo} ${estilos.busqueda}`}>
             Buscar
             <input
               type="search"
@@ -110,7 +112,7 @@ export function Listado() {
               onChange={(evento) => setBusqueda(evento.target.value)}
             />
           </label>
-          <div className={estilos.campo}>
+          <div className={campos.campo}>
             <span id="filtro-estado">Estado</span>
             <details className={estilos.estados}>
               <summary aria-labelledby="filtro-estado">
@@ -118,7 +120,7 @@ export function Listado() {
               </summary>
               <div className={estilos.opcionesEstado} role="group" aria-labelledby="filtro-estado">
                 {ORDEN_ESTADOS.map((estado) => (
-                  <label key={estado} className={estilos.opcion}>
+                  <label key={estado} className={campos.opcion}>
                     <input
                       type="checkbox"
                       checked={filtros.estado.includes(estado)}
@@ -136,7 +138,7 @@ export function Listado() {
               </div>
             </details>
           </div>
-          <label className={estilos.campo}>
+          <label className={campos.campo}>
             Sentido
             <select
               value={filtros.sentido ?? ''}
@@ -150,7 +152,7 @@ export function Listado() {
               ))}
             </select>
           </label>
-          <label className={estilos.campo}>
+          <label className={campos.campo}>
             Canal
             <select
               value={filtros.canal ?? ''}
@@ -164,7 +166,7 @@ export function Listado() {
               ))}
             </select>
           </label>
-          <label className={estilos.campo}>
+          <label className={campos.campo}>
             Día de recogida
             <input
               type="date"
@@ -172,7 +174,7 @@ export function Listado() {
               onChange={(evento) => aplicar({ fecha: evento.target.value || null })}
             />
           </label>
-          <label className={estilos.campo}>
+          <label className={campos.campo}>
             Desde
             <input
               type="datetime-local"
@@ -182,7 +184,7 @@ export function Listado() {
               onChange={(evento) => aplicar({ desde: evento.target.value || null })}
             />
           </label>
-          <label className={estilos.campo}>
+          <label className={campos.campo}>
             Hasta
             <input
               type="datetime-local"
@@ -192,7 +194,7 @@ export function Listado() {
               onChange={(evento) => aplicar({ hasta: evento.target.value || null })}
             />
           </label>
-          <label className={`${estilos.campo} ${estilos.doble}`}>
+          <label className={`${campos.campo} ${estilos.doble}`}>
             Ordenar por
             <select
               value={filtros.ordenar ?? 'recogida_en'}

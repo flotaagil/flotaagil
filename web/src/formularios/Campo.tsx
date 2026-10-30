@@ -1,5 +1,5 @@
 import { useId, type ReactElement } from 'react';
-import estilos from '../reservas.module.css';
+import estilos from './formularios.module.css';
 
 interface Props {
   etiqueta: string;

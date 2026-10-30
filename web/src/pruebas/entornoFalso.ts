@@ -3,7 +3,7 @@
  * compartido), localStorage (Map, o uno que lanza error) y un reloj cuya espera controla la prueba.
  */
 
-import type { Almacen, Canal, Entorno, Locks, MensajeSesion } from '../sesion/entorno';
+import type { Almacen, Canal, Entorno, Locks, MensajeSesion } from '../entorno';
 import type { ServidorAuthFalso } from './servidorAuthFalso';
 
 export const ORIGEN = 'http://localhost:3000';
@@ -82,15 +82,18 @@ export function crearReloj() {
 }
 
 interface Opciones {
-  servidor: ServidorAuthFalso;
+  /** Cualquier servidor falso con `fetch` (el de auth, el del portal). */
+  servidor: Pick<ServidorAuthFalso, 'fetch'>;
   locks?: Locks | null;
   almacen?: Almacen | null;
   bus?: ReturnType<typeof crearBus> | null;
   reloj?: ReturnType<typeof crearReloj>;
   azar?: number;
+  /** Hora fija para `ahora()`; por defecto la real. */
+  ahora?: number;
 }
 
-export function crearEntorno({ servidor, locks = null, almacen = crearAlmacen(), bus = null, reloj, azar = 0.5 }: Opciones) {
+export function crearEntorno({ servidor, locks = null, almacen = crearAlmacen(), bus = null, reloj, azar = 0.5, ahora }: Opciones) {
   const oyentesConexion = new Set<() => void>();
   const entorno: Entorno = {
     origen: ORIGEN,
@@ -100,6 +103,7 @@ export function crearEntorno({ servidor, locks = null, almacen = crearAlmacen(),
     crearCanal: () => bus?.crearCanal() ?? null,
     esperar: reloj ? reloj.esperar : () => Promise.resolve(),
     azar: () => azar,
+    ahora: () => ahora ?? Date.now(),
     alVolverLaConexion(oyente) {
       oyentesConexion.add(oyente);
       return () => oyentesConexion.delete(oyente);

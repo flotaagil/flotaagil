@@ -1,5 +1,6 @@
 /**
- * Lo que la sesión usa del navegador, reunido en un objeto para poder reemplazarlo en las pruebas
+ * Lo que la aplicación usa del navegador (la sesión y el portal), reunido en un objeto para poder reemplazarlo
+ * en las pruebas
  * (servidor falso, dos «pestañas» con la misma cookie, locks y canal compartidos, reloj controlado).
  */
 
@@ -33,6 +34,8 @@ export interface Entorno {
   esperar(ms: number): Promise<void>;
   /** Número en [0, 1): la espera al azar del plan B. */
   azar(): number;
+  /** Hora actual (ms). El portal la usa para la anticipación mínima; las pruebas la fijan. */
+  ahora(): number;
   /** Registra un oyente para cuando vuelve la conexión; devuelve cómo quitarlo. */
   alVolverLaConexion(oyente: () => void): () => void;
 }
@@ -77,6 +80,7 @@ export function entornoDelNavegador(): Entorno {
     },
     esperar: (ms) => new Promise((resolver) => setTimeout(resolver, ms)),
     azar: () => Math.random(),
+    ahora: () => Date.now(),
     alVolverLaConexion(oyente) {
       window.addEventListener('online', oyente);
       return () => window.removeEventListener('online', oyente);

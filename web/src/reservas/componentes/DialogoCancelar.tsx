@@ -6,7 +6,7 @@ import { Aviso } from '../../componentes/Aviso';
 import { useCancelarViaje, type ViajeDetalle } from '../api';
 import { mensajeDeErrorApi } from '../errores';
 import estilos from '../reservas.module.css';
-import { Campo } from './Campo';
+import { Campo } from '../../formularios/Campo';
 
 const MAXIMO = 200;
 

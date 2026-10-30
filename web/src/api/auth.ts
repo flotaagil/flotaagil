@@ -4,7 +4,7 @@
  * reintento del cliente de la API: un 401 aquí es la respuesta, no un access vencido.
  */
 
-import type { Entorno } from '../sesion/entorno';
+import type { Entorno } from '../entorno';
 import type { components } from './esquema';
 
 export type Usuario = components['schemas']['UsuarioSesion'];

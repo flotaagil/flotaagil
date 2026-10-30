@@ -3,18 +3,17 @@
  *
  * La guarda por rol es solo UX: la seguridad la pone el backend (401/403 y aislamiento por empresa).
  *
- * Todas las pantallas se cargan con `lazy`: el paquete inicial lleva solo el router, la sesión y el marco.
- * El `handle` (título, menú, roles) queda aquí, estático, para que el menú y la guarda no carguen código de
- * las pantallas. Ninguna ruta pública debe importar módulos de src/reservas/ (lo verifica
- * scripts/verificar-carga.mjs al final del build).
+ * Todo se carga con `lazy`: el paquete inicial lleva solo el router y los contextos. La sesión, el marco del
+ * panel y cada pantalla llegan en su chunk. El `handle` (título, menú, roles) queda aquí, estático, para que
+ * el menú y la guarda no carguen código de las pantallas. scripts/verificar-carga.mjs comprueba al final del
+ * build que el paquete inicial y el portal no cargan nada del panel ni de la sesión, y el login nada de
+ * reservas ni del portal.
  */
 
 import type { RouteObject } from 'react-router';
 import type { Rol } from '../api/auth';
 import { Cargando } from '../componentes/Cargando';
 import { ErrorDeRuta } from '../componentes/ErrorDeRuta';
-import { Layout } from '../componentes/Layout';
-import { RutaAutenticada } from './RutaAutenticada';
 
 export interface Manejo {
   titulo: string;
@@ -61,14 +60,22 @@ export function crearRutas(pantallas: RouteObject[] = pantallasDelPanel): RouteO
   const comunes = { hydrateFallbackElement: <Cargando />, errorElement: <ErrorDeRuta /> };
   return [
     {
-      path: '/login',
-      lazy: async () => ({ Component: (await import('../paginas/Login')).Login }),
+      // Raíz de sesión (lazy): /login y el panel. El portal y la página no encontrada quedan fuera.
+      lazy: async () => ({ Component: (await import('../sesion/RaizSesion')).RaizSesion }),
       ...comunes,
-    },
-    {
-      element: <RutaAutenticada />,
-      ...comunes,
-      children: [{ path: '/', element: <Layout />, children: pantallas }],
+      children: [
+        { path: '/login', lazy: async () => ({ Component: (await import('../paginas/Login')).Login }) },
+        {
+          lazy: async () => ({ Component: (await import('./RutaAutenticada')).RutaAutenticada }),
+          children: [
+            {
+              path: '/',
+              lazy: async () => ({ Component: (await import('../componentes/Layout')).Layout }),
+              children: pantallas,
+            },
+          ],
+        },
+      ],
     },
     {
       path: '*',

@@ -1,6 +1,6 @@
 import { useId } from 'react';
-import { instanteDeCampo, ocurrencias, type ValorFechaHora } from '../../hora/hora';
-import estilos from '../reservas.module.css';
+import { instanteDeCampo, ocurrencias, type ValorFechaHora } from '../hora/hora';
+import estilos from './formularios.module.css';
 
 interface Props {
   etiqueta: string;

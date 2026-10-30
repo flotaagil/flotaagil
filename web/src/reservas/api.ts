@@ -12,6 +12,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { components, paths } from '../api/esquema';
+import { ErrorApi, resultado } from '../api/resultado';
 import { useApi } from '../sesion/SesionProvider';
 
 export type Viaje = components['schemas']['Viaje'];
@@ -25,16 +26,6 @@ export type ViajeEditar = components['schemas']['PatchedViajeEditarRequest'];
 export type ListaViajes = components['schemas']['PaginatedViajeList'];
 export type ConsultaViajes = NonNullable<paths['/api/viajes/']['get']['parameters']['query']>;
 
-/** Error de una llamada: `estado` 0 = no hubo respuesta (falla de red). `cuerpo` = JSON del error, si vino. */
-export class ErrorApi extends Error {
-  constructor(
-    readonly estado: number,
-    readonly cuerpo: unknown,
-  ) {
-    super(`HTTP ${estado}`);
-  }
-}
-
 export const claves = {
   todo: ['viajes'] as const,
   listas: ['viajes', 'lista'] as const,
@@ -43,17 +34,6 @@ export const claves = {
 };
 
 const VIGENCIA_MS = 30_000;
-
-async function resultado<T>(llamada: Promise<{ data?: T; error?: unknown; response: Response }>): Promise<T> {
-  let respuesta: Awaited<typeof llamada>;
-  try {
-    respuesta = await llamada;
-  } catch {
-    throw new ErrorApi(0, null);
-  }
-  if (respuesta.response.ok && respuesta.data !== undefined) return respuesta.data;
-  throw new ErrorApi(respuesta.response.status, respuesta.error ?? null);
-}
 
 export function useViajes(consulta: ConsultaViajes) {
   const api = useApi();

@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { createBrowserRouter } from 'react-router';
 import { App } from './App';
 import { crearRutas } from './rutas/tabla';
-import { entornoDelNavegador } from './sesion/entorno';
+import { entornoDelNavegador } from './entorno';
 import './estilos/tokens.css';
 import './estilos/global.css';
 

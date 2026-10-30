@@ -7,7 +7,7 @@
  */
 
 import createClient, { type Client } from 'openapi-fetch';
-import type { Entorno } from '../sesion/entorno';
+import type { Entorno } from '../entorno';
 import type { Sesion } from '../sesion/sesion';
 import type { paths } from './esquema';
 

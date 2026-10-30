@@ -16,7 +16,7 @@
 
 import { auth, leerAccess } from '../api/auth';
 import { leerCodigo, motivoDeFalla, type MotivoFalla } from '../api/errores';
-import type { Entorno } from './entorno';
+import type { Entorno } from '../entorno';
 import type { Marca } from './marca';
 
 /** Lock compartido por la renovación y el logout. */

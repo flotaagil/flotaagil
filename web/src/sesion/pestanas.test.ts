@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { MENSAJES } from '../api/errores';
 import { crearEntorno, crearLocks, crearReloj, vaciar } from '../pruebas/entornoFalso';
 import { ServidorAuthFalso } from '../pruebas/servidorAuthFalso';
-import type { Locks } from './entorno';
+import type { Locks } from '../entorno';
 import { crearSesionConectada as crearSesion } from '../pruebas/sesionConectada';
 import type { Sesion } from './sesion';
 

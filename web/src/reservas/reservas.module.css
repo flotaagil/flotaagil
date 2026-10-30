@@ -81,18 +81,10 @@
   grid-column: 1 / -1;
 }
 
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espacio-1);
-  min-width: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
+.estados {
+  position: relative;
 }
 
-.campo input,
-.campo select,
-.campo textarea,
 .estados > summary {
   min-height: var(--toque);
   width: 100%;
@@ -103,34 +95,6 @@
   background: var(--superficie);
   color: var(--texto);
   font-weight: 400;
-}
-
-.campo textarea {
-  padding: var(--espacio-2) var(--espacio-3);
-  resize: vertical;
-}
-
-.campo [aria-invalid='true'] {
-  border-color: var(--error-borde);
-}
-
-.errorCampo {
-  color: var(--error-texto);
-  font-size: 0.875rem;
-  font-weight: 400;
-}
-
-.ayuda {
-  color: var(--texto-suave);
-  font-size: 0.85rem;
-  font-weight: 400;
-}
-
-.estados {
-  position: relative;
-}
-
-.estados > summary {
   display: flex;
   align-items: center;
   font-size: 16px;
@@ -156,15 +120,6 @@
   border: 1px solid var(--borde);
   border-radius: var(--radio);
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
-}
-
-.opcion {
-  display: flex;
-  align-items: center;
-  gap: var(--espacio-2);
-  min-height: 36px;
-  font-weight: 400;
-  white-space: nowrap;
 }
 
 .chips {
@@ -510,27 +465,6 @@
   font-weight: 700;
 }
 
-.ancho {
-  grid-column: 1 / -1;
-}
-
-.opciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espacio-1) var(--espacio-4);
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.opciones > legend {
-  width: 100%;
-  padding: 0;
-  margin-bottom: var(--espacio-1);
-}
-
 .soloLectura {
   margin: 0;
 }
@@ -542,23 +476,6 @@
 
 .soloLectura dd {
   margin: 0 0 var(--espacio-2);
-}
-
-.avisoHora {
-  display: flex;
-  flex-direction: column;
-  gap: var(--espacio-1);
-  margin-top: var(--espacio-1);
-  padding: var(--espacio-2) var(--espacio-3);
-  background: var(--info-fondo);
-  border: 1px solid var(--info-borde);
-  border-radius: var(--radio);
-  font-size: 0.875rem;
-  font-weight: 400;
-}
-
-.avisoHora p {
-  margin: 0;
 }
 
 .pie {

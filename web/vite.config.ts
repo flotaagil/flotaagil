@@ -60,6 +60,8 @@ export default defineConfig({
         'src/api/**': MINIMO,
         'src/hora/**': MINIMO,
         'src/reservas/**': MINIMO,
+        'src/formularios/**': MINIMO,
+        'src/entorno.ts': MINIMO,
       },
     },
   },

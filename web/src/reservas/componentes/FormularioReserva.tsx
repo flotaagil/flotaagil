@@ -3,7 +3,8 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { Controller, useForm, useWatch, type FieldPath } from 'react-hook-form';
 import { Link } from 'react-router';
 import { Aviso } from '../../componentes/Aviso';
-import { ErrorApi, type ViajeDetalle } from '../api';
+import { ErrorApi } from '../../api/resultado';
+import type { ViajeDetalle } from '../api';
 import { erroresDelBackend } from '../errores';
 import { CANALES, SENTIDOS } from '../etiquetas';
 import {
@@ -16,9 +17,10 @@ import {
   type Modo,
   type ValoresReserva,
 } from '../formulario';
+import campos from '../../formularios/formularios.module.css';
 import estilos from '../reservas.module.css';
-import { Campo } from './Campo';
-import { CampoFechaHora } from './CampoFechaHora';
+import { Campo } from '../../formularios/Campo';
+import { CampoFechaHora } from '../../formularios/CampoFechaHora';
 
 interface Props {
   modo: Modo;
@@ -117,10 +119,10 @@ export function FormularioReserva({ modo, iniciales, viaje, enviar, describirFal
                 />
               )}
             </Campo>
-            <fieldset className={estilos.opciones}>
+            <fieldset className={campos.opciones}>
               <legend>Canal</legend>
               {CANALES_PANEL.map((canal) => (
-                <label key={canal} className={estilos.opcion}>
+                <label key={canal} className={campos.opcion}>
                   <input type="radio" value={canal} {...register('canal')} />
                   {CANALES[canal]}
                 </label>
@@ -129,14 +131,14 @@ export function FormularioReserva({ modo, iniciales, viaje, enviar, describirFal
           </>
         ) : (
           viaje && (
-            <dl className={`${estilos.soloLectura} ${estilos.ancho}`}>
+            <dl className={`${estilos.soloLectura} ${campos.ancho}`}>
               <dt>Nombre</dt>
               <dd>{viaje.pasajero.nombre}</dd>
               <dt>Teléfono</dt>
               <dd>{viaje.pasajero.telefono}</dd>
               <dt>Canal</dt>
               <dd>{CANALES[viaje.canal]}</dd>
-              <dd className={estilos.ayuda}>El pasajero, su teléfono y el canal no se pueden cambiar al editar.</dd>
+              <dd className={campos.ayuda}>El pasajero, su teléfono y el canal no se pueden cambiar al editar.</dd>
             </dl>
           )
         )}
@@ -144,10 +146,10 @@ export function FormularioReserva({ modo, iniciales, viaje, enviar, describirFal
 
       <fieldset disabled={bloqueado}>
         <legend>Trayecto</legend>
-        <fieldset className={`${estilos.opciones} ${estilos.ancho}`}>
+        <fieldset className={`${campos.opciones} ${campos.ancho}`}>
           <legend>Sentido</legend>
           {SENTIDOS_FORMULARIO.map((valor) => (
-            <label key={valor} className={estilos.opcion}>
+            <label key={valor} className={campos.opcion}>
               <input type="radio" value={valor} {...register('sentido')} />
               {SENTIDOS[valor]}
             </label>

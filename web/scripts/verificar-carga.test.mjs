@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { cierreEstatico, PANTALLAS_DIFERIDAS, verificar } from './verificar-carga.mjs';
+import { cierreEstatico, DIFERIDOS, verificar } from './verificar-carga.mjs';
 
-/** Informe mínimo de un build correcto: cada pantalla en su chunk; reservas solo en chunks dinámicos. */
+/** Informe mínimo de un build correcto: cada módulo diferido en su chunk; lo vigilado, solo en esos chunks. */
 function informeCorrecto() {
-  const pantallas = PANTALLAS_DIFERIDAS.map((fachada, i) => ({
-    archivo: `assets/p${i}.js`,
+  const diferidos = DIFERIDOS.map((fachada, i) => ({
+    archivo: `assets/d${i}.js`,
     entrada: false,
     dinamico: true,
     fachada,
@@ -13,12 +13,14 @@ function informeCorrecto() {
   }));
   return {
     chunks: [
-      { archivo: 'assets/index.js', entrada: true, dinamico: false, fachada: 'index.html', modulos: ['src/main.tsx', 'src/sesion/sesion.ts'], imports: ['assets/compartido.js'] },
+      { archivo: 'assets/index.js', entrada: true, dinamico: false, fachada: 'index.html', modulos: ['src/main.tsx', 'src/App.tsx'], imports: ['assets/compartido.js'] },
       { archivo: 'assets/compartido.js', entrada: false, dinamico: false, fachada: null, modulos: ['src/componentes/Aviso.tsx'], imports: [] },
-      ...pantallas,
+      ...diferidos,
     ],
   };
 }
+
+const chunkDe = (informe, fachada) => informe.chunks.find((c) => c.fachada === fachada);
 
 describe('verificar-carga', () => {
   it('un build correcto pasa', () => {
@@ -26,44 +28,64 @@ describe('verificar-carga', () => {
   });
 
   it('sigue los imports estáticos, no los dinámicos', () => {
-    const informe = informeCorrecto();
-    expect(cierreEstatico(informe.chunks, 'assets/index.js')).toEqual(['src/main.tsx', 'src/sesion/sesion.ts', 'src/componentes/Aviso.tsx']);
-  });
-
-  it('falla si un módulo de reservas llega al paquete inicial a través de un chunk compartido', () => {
-    const informe = informeCorrecto();
-    informe.chunks[1].modulos.push('src/reservas/api.ts');
-    expect(verificar(informe)).toEqual([
-      'paquete inicial carga módulos de reservas: src/reservas/api.ts.',
-      'src/paginas/Login.tsx carga módulos de reservas: src/reservas/api.ts.',
-      'src/paginas/NoEncontrada.tsx carga módulos de reservas: src/reservas/api.ts.',
+    expect(cierreEstatico(informeCorrecto().chunks, 'assets/index.js')).toEqual([
+      'src/main.tsx',
+      'src/App.tsx',
+      'src/componentes/Aviso.tsx',
     ]);
   });
 
-  it('falla si el login importa algo de reservas', () => {
+  it('falla si la sesión llega al paquete inicial a través de un chunk compartido', () => {
     const informe = informeCorrecto();
-    const login = informe.chunks.find((c) => c.fachada === 'src/paginas/Login.tsx');
+    informe.chunks[1].modulos.push('src/sesion/SesionProvider.tsx');
+    expect(verificar(informe)).toEqual([
+      'paquete inicial carga módulos prohibidos: src/sesion/SesionProvider.tsx.',
+      'página no encontrada carga módulos prohibidos: src/sesion/SesionProvider.tsx.',
+    ]);
+  });
+
+  it.each([
+    'src/api/cliente.ts',
+    'src/api/auth.ts',
+    'src/componentes/Layout.tsx',
+    'src/rutas/RutaAutenticada.tsx',
+    'src/paginas/Login.tsx',
+    'src/reservas/api.ts',
+  ])('falla si la página no encontrada (sin sesión) carga %s', (modulo) => {
+    const informe = informeCorrecto();
+    chunkDe(informe, 'src/paginas/NoEncontrada.tsx').modulos.push(modulo);
+    expect(verificar(informe)).toEqual([`página no encontrada carga módulos prohibidos: ${modulo}.`]);
+  });
+
+  it('el login puede cargar la sesión, pero no reservas', () => {
+    const informe = informeCorrecto();
+    const login = chunkDe(informe, 'src/paginas/Login.tsx');
+    login.modulos.push('src/sesion/sesion.ts');
+    expect(verificar(informe)).toEqual([]);
     login.modulos.push('src/reservas/etiquetas.ts');
-    expect(verificar(informe)).toEqual(['src/paginas/Login.tsx carga módulos de reservas: src/reservas/etiquetas.ts.']);
+    expect(verificar(informe)).toEqual(['login carga módulos prohibidos: src/reservas/etiquetas.ts.']);
   });
 
-  it('falla si una pantalla no se carga con lazy', () => {
+  it('falla si un módulo no se carga con lazy', () => {
     const informe = informeCorrecto();
-    informe.chunks = informe.chunks.filter((c) => c.fachada !== 'src/reservas/paginas/Editar.tsx');
+    informe.chunks = informe.chunks.filter((c) => c.fachada !== 'src/componentes/Layout.tsx');
     expect(verificar(informe)).toEqual([
-      'src/reservas/paginas/Editar.tsx no se carga con lazy (no es la entrada de un chunk dinámico).',
+      'src/componentes/Layout.tsx no se carga con lazy (no es la entrada de un chunk dinámico).',
     ]);
   });
 
-  it('falla si no hay módulos de reservas (no estaría revisando nada) o si hay más de una entrada', () => {
+  it('falla si lo vigilado no está en el build (no estaría revisando nada) o si hay más de una entrada', () => {
     const informe = {
       chunks: [
         { archivo: 'a.js', entrada: true, dinamico: false, fachada: null, modulos: [], imports: [] },
         { archivo: 'b.js', entrada: true, dinamico: false, fachada: null, modulos: [], imports: [] },
       ],
     };
-    const problemas = verificar(informe);
-    expect(problemas[0]).toBe('Se esperaba un solo chunk de entrada y hay 2.');
-    expect(problemas.at(-1)).toBe('No hay módulos de src/reservas/ en el build: la verificación no estaría revisando nada.');
+    const problemas = verificar(informe, { diferidos: [] });
+    expect(problemas).toEqual([
+      'Se esperaba un solo chunk de entrada y hay 2.',
+      'No hay módulos de src/sesion/ en el build: la verificación no estaría revisando nada.',
+      'No hay módulos de src/reservas/ en el build: la verificación no estaría revisando nada.',
+    ]);
   });
 });

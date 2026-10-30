@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Cargando } from '../../componentes/Cargando';
-import { ErrorApi, useEditarViaje, useViaje, type ViajeDetalle } from '../api';
+import { ErrorApi } from '../../api/resultado';
+import { useEditarViaje, useViaje, type ViajeDetalle } from '../api';
 import { FormularioReserva } from '../componentes/FormularioReserva';
 import { NoEncontradaReserva } from '../componentes/NoEncontradaReserva';
 import { mensajeDeErrorApi } from '../errores';

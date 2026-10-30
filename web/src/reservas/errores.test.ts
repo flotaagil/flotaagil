@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MENSAJES } from '../api/errores';
-import { ErrorApi } from './api';
+import { ErrorApi } from '../api/resultado';
 import { erroresDelBackend, mensajeDeErrorApi, sinRespuesta } from './errores';
 import { CAMPOS_DEL_MODO } from './formulario';
 

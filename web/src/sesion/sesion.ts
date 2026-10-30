@@ -16,7 +16,7 @@
 
 import { auth, leerSesion, leerUsuario, type Usuario } from '../api/auth';
 import { leerCodigo, MENSAJES, mensajeDeError, motivoDeFalla, type MotivoFalla } from '../api/errores';
-import type { Canal, Entorno, MensajeSesion } from './entorno';
+import type { Canal, Entorno, MensajeSesion } from '../entorno';
 import { crearMarca } from './marca';
 import { crearRenovador, NOMBRE_LOCK, type MotivoSinSesion } from './renovar';
 

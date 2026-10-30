@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { MENSAJES } from '../api/errores';
 import { crearAlmacen, crearBus, crearEntorno, crearLocks, vaciar } from '../pruebas/entornoFalso';
 import { ServidorAuthFalso } from '../pruebas/servidorAuthFalso';
-import type { Almacen } from './entorno';
+import type { Almacen } from '../entorno';
 import { CLAVE_LOGOUT_PENDIENTE } from './marca';
 import { crearSesionConectada as crearSesion } from '../pruebas/sesionConectada';
 import { crearSesion as crearSesionSinConectar } from './sesion';

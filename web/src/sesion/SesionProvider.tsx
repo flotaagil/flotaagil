@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { crearClienteApi, type ClienteApi } from '../api/cliente';
-import type { Entorno } from './entorno';
+import type { Entorno } from '../entorno';
 import { crearSesion, type EstadoSesion, type Sesion } from './sesion';
 
 interface ContextoSesion {
