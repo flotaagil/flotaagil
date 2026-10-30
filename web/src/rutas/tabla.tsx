@@ -78,6 +78,19 @@ export function crearRutas(pantallas: RouteObject[] = pantallasDelPanel): RouteO
       ],
     },
     {
+      // Portal público del pasajero (HU-19): sin sesión ni refresh silencioso.
+      path: '/solicitar/:slug',
+      lazy: async () => ({ Component: (await import('../portal/LayoutPortal')).LayoutPortal }),
+      ...comunes,
+      children: [
+        { index: true, lazy: async () => ({ Component: (await import('../portal/paginas/Solicitar')).Solicitar }) },
+        {
+          path: 'privacidad',
+          lazy: async () => ({ Component: (await import('../portal/paginas/Privacidad')).Privacidad }),
+        },
+      ],
+    },
+    {
       path: '*',
       lazy: async () => ({ Component: (await import('../paginas/NoEncontrada')).NoEncontrada }),
       ...comunes,

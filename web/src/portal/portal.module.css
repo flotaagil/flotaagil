@@ -1,0 +1,393 @@
+/*
+ * Portal del pasajero: primero el celular (suele pedir desde el aeropuerto). Una columna, campos de 44 px y
+ * 16 px de letra (iOS no hace zoom), opciones grandes y el botón principal fijo abajo, al alcance del pulgar.
+ * En escritorio, una tarjeta centrada.
+ */
+
+.pagina {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--fondo);
+}
+
+.cabecera {
+  display: flex;
+  flex-direction: column;
+  padding: var(--espacio-3) var(--espacio-4);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.marca {
+  font-weight: 700;
+  color: var(--acento);
+  overflow-wrap: anywhere;
+}
+
+.subtitulo {
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.contenido {
+  flex: 1;
+  width: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: var(--espacio-4);
+}
+
+.piePagina {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--espacio-2) var(--espacio-4);
+  padding: var(--espacio-4);
+  /* Espacio para la barra de envío fija en celular. */
+  padding-bottom: calc(var(--espacio-4) + 80px + env(safe-area-inset-bottom));
+  color: var(--texto-suave);
+  font-size: 0.875rem;
+}
+
+.piePagina a {
+  color: var(--acento);
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.tarjeta h1,
+.formulario h1 {
+  margin: 0;
+  font-size: 1.375rem;
+}
+
+.tarjeta h2 {
+  margin: var(--espacio-2) 0 0;
+  font-size: 1.05rem;
+}
+
+.tarjeta p {
+  margin: 0;
+}
+
+.tarjeta h1:focus {
+  outline: none;
+}
+
+.esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.esqueleto span {
+  display: block;
+  height: 44px;
+  border-radius: var(--radio);
+  background: var(--borde);
+  opacity: 0.5;
+}
+
+/* --- Formulario --- */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.intro {
+  margin: 0;
+  color: var(--texto-suave);
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--espacio-4);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.grupo > legend {
+  padding: 0 var(--espacio-1);
+  font-weight: 700;
+}
+
+/* El campo de texto del portal usa 16 px en la etiqueta (es la pantalla principal). */
+.grupo label {
+  font-size: 1rem;
+}
+
+.opcionesGrandes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.opcionesGrandes > legend {
+  margin-bottom: var(--espacio-2);
+  padding: 0;
+  font-weight: 600;
+}
+
+.opcionesGrandes label {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-3);
+  min-height: var(--toque);
+  padding: var(--espacio-2) var(--espacio-3);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  cursor: pointer;
+}
+
+.opcionesGrandes label:has(input:checked) {
+  border-color: var(--acento);
+  background: var(--acento-suave);
+  font-weight: 600;
+}
+
+.opcionesGrandes input,
+.aceptacion input {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin: 0;
+  accent-color: var(--acento);
+}
+
+.vuelo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3);
+  background: var(--fondo);
+  border-radius: var(--radio);
+}
+
+.sugerencia {
+  align-self: flex-start;
+  min-height: var(--toque);
+  padding: 0 var(--espacio-3);
+  border: 1px dashed var(--acento);
+  border-radius: var(--radio);
+  background: var(--acento-suave);
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.explicacion {
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  background: var(--info-fondo);
+  border: 1px solid var(--info-borde);
+  border-radius: var(--radio);
+  font-size: 0.9rem;
+}
+
+.aceptacion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+}
+
+.aceptacion > label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espacio-3);
+  min-height: var(--toque);
+  padding-top: var(--espacio-2);
+  cursor: pointer;
+}
+
+.desplegable {
+  margin-left: calc(22px + var(--espacio-3));
+}
+
+.desplegable > summary {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  color: var(--acento);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.errorCampo {
+  color: var(--error-texto);
+  font-size: 0.875rem;
+}
+
+/* Fuera de pantalla (no display:none, que algunos bots detectan); además aria-hidden y tabIndex=-1. */
+.trampa {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.confirmarReenvio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+  padding: var(--espacio-3);
+  background: var(--error-fondo);
+  border: 1px solid var(--error-borde);
+  border-radius: var(--radio);
+}
+
+.confirmarReenvio p {
+  margin: 0;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.barraEnvio {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: var(--espacio-3) var(--espacio-4) calc(var(--espacio-3) + env(safe-area-inset-bottom));
+  background: var(--superficie);
+  border-top: 1px solid var(--borde);
+}
+
+.barraEnvio .botonPrincipal {
+  width: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
+  display: flex;
+}
+
+.botonPrincipal,
+.botonSecundario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--espacio-4);
+  border-radius: var(--radio);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.botonPrincipal {
+  border: 0;
+  background: var(--acento);
+  color: var(--sobre-acento);
+}
+
+.botonPrincipal:hover {
+  background: var(--acento-hover);
+}
+
+.botonPrincipal:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.botonSecundario {
+  align-self: flex-start;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  color: var(--texto);
+}
+
+/* --- Confirmación --- */
+
+.destacado {
+  padding: var(--espacio-3);
+  background: var(--acento-suave);
+  border-radius: var(--radio);
+}
+
+.resumen {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--espacio-2) var(--espacio-3);
+  margin: 0;
+}
+
+.resumen dt {
+  color: var(--texto-suave);
+}
+
+.resumen dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.nota {
+  color: var(--texto-suave);
+}
+
+/* --- Privacidad --- */
+
+.franja {
+  margin: 0 0 var(--espacio-3);
+  padding: var(--espacio-2) var(--espacio-3);
+  background: var(--info-fondo);
+  border: 1px dashed var(--info-borde);
+  border-radius: var(--radio);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.textoLegal {
+  font-size: 0.9rem;
+}
+
+.textoLegal h3 {
+  margin: var(--espacio-3) 0 var(--espacio-1);
+  font-size: 0.95rem;
+}
+
+.textoLegal p {
+  margin: 0;
+}
+
+/* Escritorio: la barra de envío vuelve a su lugar y el pie no reserva espacio para ella. */
+@media (min-width: 45rem) {
+  .contenido {
+    padding: var(--espacio-6) var(--espacio-4);
+  }
+
+  .barraEnvio {
+    position: static;
+    padding: 0;
+    background: transparent;
+    border: 0;
+  }
+
+  .piePagina {
+    padding-bottom: var(--espacio-4);
+  }
+}

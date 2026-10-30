@@ -10,13 +10,15 @@ interface Props {
   error?: string;
   ayuda?: string;
   nombre: string;
+  /** Mínimo sugerido al selector del navegador (hora de pared de Santiago). */
+  min?: string;
 }
 
 /**
  * Fecha y hora en Santiago (`datetime-local`). Una hora inexistente se avisa de inmediato; una repetida
  * muestra un aviso con el desfase aplicado y el selector «primera (UTC−3) / segunda (UTC−4)».
  */
-export function CampoFechaHora({ etiqueta, valor, alCambiar, alSalir, error, ayuda, nombre }: Props) {
+export function CampoFechaHora({ etiqueta, valor, alCambiar, alSalir, error, ayuda, nombre, min }: Props) {
   const id = useId();
   const repetida = ocurrencias(valor.pared);
   const resultado = valor.pared ? instanteDeCampo(valor) : null;
@@ -30,6 +32,7 @@ export function CampoFechaHora({ etiqueta, valor, alCambiar, alSalir, error, ayu
         name={nombre}
         type="datetime-local"
         step={60}
+        min={min}
         value={valor.pared}
         aria-invalid={mensaje ? true : undefined}
         aria-describedby={mensaje ? `${id}-error` : ayuda ? `${id}-ayuda` : undefined}

@@ -19,6 +19,8 @@ import { fileURLToPath } from 'node:url';
 export const PANEL_Y_SESION =
   /^src\/(sesion|reservas)\/|^src\/api\/(cliente|auth)\.ts$|^src\/componentes\/Layout\.tsx$|^src\/rutas\/RutaAutenticada\.tsx$|^src\/paginas\/(Login|Inicio)\.tsx$/;
 export const RESERVAS = /^src\/reservas\//;
+/** El login (con sesión) no carga reservas ni el portal. */
+export const RESERVAS_Y_PORTAL = /^src\/(reservas|portal)\//;
 
 /** Módulos que deben llegar con lazy (entrada de un chunk dinámico). */
 export const DIFERIDOS = [
@@ -32,19 +34,27 @@ export const DIFERIDOS = [
   'src/reservas/paginas/Nueva.tsx',
   'src/reservas/paginas/Detalle.tsx',
   'src/reservas/paginas/Editar.tsx',
+  'src/portal/LayoutPortal.tsx',
+  'src/portal/paginas/Solicitar.tsx',
+  'src/portal/paginas/Privacidad.tsx',
 ];
 
 /** Desde dónde se mira y qué no puede cargar. `desde: null` = el paquete inicial. */
 export const REGLAS = [
   { desde: null, nombre: 'paquete inicial', prohibido: PANEL_Y_SESION },
   { desde: 'src/paginas/NoEncontrada.tsx', nombre: 'página no encontrada', prohibido: PANEL_Y_SESION },
-  { desde: 'src/paginas/Login.tsx', nombre: 'login', prohibido: RESERVAS },
+  { desde: 'src/paginas/Login.tsx', nombre: 'login', prohibido: RESERVAS_Y_PORTAL },
+  // Portal público (/solicitar): nada del panel ni de la sesión.
+  { desde: 'src/portal/LayoutPortal.tsx', nombre: '/solicitar (marco)', prohibido: PANEL_Y_SESION },
+  { desde: 'src/portal/paginas/Solicitar.tsx', nombre: '/solicitar (formulario)', prohibido: PANEL_Y_SESION },
+  { desde: 'src/portal/paginas/Privacidad.tsx', nombre: '/solicitar/privacidad', prohibido: PANEL_Y_SESION },
 ];
 
 /** Deben aparecer en el build: si no, la regla que los prohíbe no estaría probando nada. */
 export const VIGILADOS = [
   ['src/sesion/', /^src\/sesion\//],
   ['src/reservas/', RESERVAS],
+  ['src/portal/', /^src\/portal\//],
 ];
 
 /** Módulos que se cargan al abrir un chunk: el chunk y todos sus imports estáticos (no los dinámicos). */

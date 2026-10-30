@@ -61,6 +61,7 @@ export default defineConfig({
         'src/hora/**': MINIMO,
         'src/reservas/**': MINIMO,
         'src/formularios/**': MINIMO,
+        'src/portal/**': MINIMO,
         'src/entorno.ts': MINIMO,
       },
     },

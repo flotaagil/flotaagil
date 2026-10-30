@@ -41,6 +41,9 @@ describe('verificar-carga', () => {
     expect(verificar(informe)).toEqual([
       'paquete inicial carga módulos prohibidos: src/sesion/SesionProvider.tsx.',
       'página no encontrada carga módulos prohibidos: src/sesion/SesionProvider.tsx.',
+      '/solicitar (marco) carga módulos prohibidos: src/sesion/SesionProvider.tsx.',
+      '/solicitar (formulario) carga módulos prohibidos: src/sesion/SesionProvider.tsx.',
+      '/solicitar/privacidad carga módulos prohibidos: src/sesion/SesionProvider.tsx.',
     ]);
   });
 
@@ -55,6 +58,30 @@ describe('verificar-carga', () => {
     const informe = informeCorrecto();
     chunkDe(informe, 'src/paginas/NoEncontrada.tsx').modulos.push(modulo);
     expect(verificar(informe)).toEqual([`página no encontrada carga módulos prohibidos: ${modulo}.`]);
+  });
+
+  it.each([
+    ['src/portal/LayoutPortal.tsx', '/solicitar (marco)'],
+    ['src/portal/paginas/Solicitar.tsx', '/solicitar (formulario)'],
+    ['src/portal/paginas/Privacidad.tsx', '/solicitar/privacidad'],
+  ])('falla si %s carga algo del panel o de la sesión, también a través de un componente compartido', (fachada, nombre) => {
+    const informe = informeCorrecto();
+    const compartido = { archivo: 'assets/formularios.js', entrada: false, dinamico: false, fachada: null, modulos: ['src/formularios/Campo.tsx', 'src/sesion/SesionProvider.tsx'], imports: [] };
+    informe.chunks.push(compartido);
+    chunkDe(informe, fachada).imports.push('assets/formularios.js');
+    expect(verificar(informe)).toEqual([`${nombre} carga módulos prohibidos: src/sesion/SesionProvider.tsx.`]);
+  });
+
+  it('el portal puede cargar piezas compartidas (formularios, horas, api/resultado)', () => {
+    const informe = informeCorrecto();
+    chunkDe(informe, 'src/portal/paginas/Solicitar.tsx').modulos.push('src/formularios/Campo.tsx', 'src/hora/hora.ts', 'src/api/resultado.ts', 'src/api/errores.ts');
+    expect(verificar(informe)).toEqual([]);
+  });
+
+  it('el login no carga el portal', () => {
+    const informe = informeCorrecto();
+    chunkDe(informe, 'src/paginas/Login.tsx').modulos.push('src/portal/telefono.ts');
+    expect(verificar(informe)).toEqual(['login carga módulos prohibidos: src/portal/telefono.ts.']);
   });
 
   it('el login puede cargar la sesión, pero no reservas', () => {
@@ -86,6 +113,7 @@ describe('verificar-carga', () => {
       'Se esperaba un solo chunk de entrada y hay 2.',
       'No hay módulos de src/sesion/ en el build: la verificación no estaría revisando nada.',
       'No hay módulos de src/reservas/ en el build: la verificación no estaría revisando nada.',
+      'No hay módulos de src/portal/ en el build: la verificación no estaría revisando nada.',
     ]);
   });
 });
