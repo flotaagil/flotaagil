@@ -1,0 +1,45 @@
+.atajos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--espacio-3);
+  margin: 0 0 var(--espacio-4);
+  padding: 0;
+  list-style: none;
+}
+
+.atajos a {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-1);
+  height: 100%;
+  padding: var(--espacio-4);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.atajos a:hover {
+  border-color: var(--acento);
+}
+
+.atajos strong {
+  color: var(--acento);
+}
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--toque);
+  padding: 0 var(--espacio-4);
+  border-radius: var(--radio);
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.boton:hover {
+  background: var(--acento-hover);
+}

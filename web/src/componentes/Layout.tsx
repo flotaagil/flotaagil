@@ -58,7 +58,8 @@ export function Layout() {
         <ul>
           {menu.map((entrada) => (
             <li key={entrada.ruta}>
-              <NavLink to={entrada.ruta} end onClick={() => setMenuAbierto(false)}>
+              {/* Inicio solo se marca en «/»; Reservas también en /reservas/42. */}
+              <NavLink to={entrada.ruta} end={entrada.ruta === '/'} onClick={() => setMenuAbierto(false)}>
                 {entrada.titulo}
               </NavLink>
             </li>

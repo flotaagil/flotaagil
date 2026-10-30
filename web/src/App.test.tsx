@@ -57,9 +57,12 @@ describe('arranque', () => {
     montar('/', { servidor });
     expect(screen.getByRole('status')).toHaveTextContent('Cargando…');
     expect(screen.queryByLabelText('Correo')).not.toBeInTheDocument();
+    // La pantalla se carga con lazy: el refresh sale cuando llega su chunk.
+    await waitFor(() => expect(servidor.pendientes).toHaveLength(1));
+    expect(screen.queryByLabelText('Correo')).not.toBeInTheDocument();
     await act(async () => {
-      await vaciar();
       servidor.entregar();
+      await vaciar();
     });
     expect(await screen.findByText('Hola, Ana Admin.')).toBeInTheDocument();
   });
@@ -216,5 +219,27 @@ describe('dos pestañas en React StrictMode', () => {
     await userEvent.setup().click(uno.getByRole('button', { name: 'Cerrar sesión' }));
     expect(await dos.findByLabelText('Correo')).toBeInTheDocument();
     expect(pestanas[1].router.state.location.pathname).toBe('/login');
+  });
+});
+
+describe('error al cargar una pantalla', () => {
+  it.each([
+    [new TypeError('Failed to fetch dynamically imported module: /assets/Listado-x.js'), 'Hay una versión nueva del panel'],
+    [new Error('Fallo cualquiera'), 'Ocurrió un error inesperado'],
+  ])('%s → «%s» con Recargar', async (error, titulo) => {
+    const servidor = new ServidorAuthFalso();
+    servidor.sembrarSesion();
+    const pantallas: RouteObject[] = [
+      ...pantallasDelPanel,
+      {
+        path: 'rota',
+        lazy: async () => {
+          throw error;
+        },
+      },
+    ];
+    montar('/rota', { servidor, pantallas });
+    expect(await screen.findByRole('heading', { name: titulo })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Recargar' })).toBeInTheDocument();
   });
 });

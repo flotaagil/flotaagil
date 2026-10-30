@@ -33,12 +33,20 @@ describe('destino de `volver`', () => {
   });
 
   it('las pantallas nuevas quedan cubiertas por la tabla de rutas, sin listas a mano', () => {
-    const conReservas = crearRutas([
+    const conOtra = crearRutas([
       { index: true, element: null },
-      { path: 'reservas/:id', element: null },
+      { path: 'otra/:id', element: null },
     ]);
-    expect(destinoSeguro('/reservas/42?ver=historial', conReservas, ORIGEN)).toBe('/reservas/42?ver=historial');
-    expect(destinoSeguro('/reservas/42', rutas, ORIGEN)).toBe(INICIO);
-    expect(destinoSeguro('/reservas', conReservas, ORIGEN)).toBe(INICIO);
+    expect(destinoSeguro('/otra/42?ver=historial', conOtra, ORIGEN)).toBe('/otra/42?ver=historial');
+    expect(destinoSeguro('/otra/42', rutas, ORIGEN)).toBe(INICIO);
+    expect(destinoSeguro('/otra', conOtra, ORIGEN)).toBe(INICIO);
+  });
+
+  it('las rutas de reservas son destinos válidos', () => {
+    expect(destinoSeguro('/reservas?estado=SOLICITADO&desde=', rutas, ORIGEN)).toBe('/reservas?estado=SOLICITADO&desde=');
+    expect(destinoSeguro('/reservas/42?x=1#h', rutas, ORIGEN)).toBe('/reservas/42?x=1#h');
+    expect(destinoSeguro('/reservas/42/editar', rutas, ORIGEN)).toBe('/reservas/42/editar');
+    expect(destinoSeguro('/reservas/nueva', rutas, ORIGEN)).toBe('/reservas/nueva');
+    expect(destinoSeguro('/reservas/42/otra', rutas, ORIGEN)).toBe(INICIO);
   });
 });
