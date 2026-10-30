@@ -9,7 +9,7 @@ Interfaz web de FlotaÁgil.
 
 Stack: Node 22 LTS, TypeScript 5, React 19 + Vite 6, React Router 7, TanStack Query 5, React Hook Form + Zod, CSS Modules, openapi-fetch con tipos generados desde `backend/openapi.yaml`. Pruebas con Vitest + Testing Library; ESLint.
 
-Esta base (`chore/web-base`) trae la infraestructura compartida: cliente de la API, sesión, login, layout y una página de Inicio. Las pantallas de reservas llegan en `feat/HU-03-web` y el formulario público en `feat/HU-19-web`.
+Hoy tiene la infraestructura compartida (cliente de la API, sesión, login, layout) y las pantallas de reservas de HU-03: listado con filtros, detalle con historial, crear, editar y cancelar. El formulario público llega en `feat/HU-19-web`.
 
 ## Desarrollo
 
@@ -25,8 +25,8 @@ npm run dev          # http://localhost:5173 ; /api → http://localhost:8000 (p
 |---|---|
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm test` | Vitest con cobertura; exige ≥ 70 % en `src/sesion` y `src/api` (configurado en `vite.config.ts`, así que también aplica a `npx vitest run` del CI) |
-| `npm run build` | Typecheck y build de producción en `dist/` |
+| `npm test` | Vitest con cobertura; exige ≥ 70 % en `src/sesion`, `src/api`, `src/hora` y `src/reservas` (configurado en `vite.config.ts`, así que también aplica a `npx vitest run` del CI) |
+| `npm run build` | Typecheck, build de producción en `dist/` y `scripts/verificar-carga.mjs` (carga diferida, ver abajo) |
 | `npm run gen:api` | Regenera `src/api/esquema.d.ts` desde `../backend/openapi.yaml`. Se versiona: después de regenerar no debe haber diferencias |
 
 Se versiona `package-lock.json` y se instala con `npm ci`. No se usan `--force` ni `--legacy-peer-deps`.
@@ -38,17 +38,21 @@ Para **cambiar dependencias** (`npm install <paquete>`), npm 10 (el que trae Nod
 ```
 src/api/        cliente tipado (openapi-fetch), llamadas de auth, mensajes de error por código
 src/sesion/     sesión: access en memoria, renovación, logout, marca de logout pendiente
+src/hora/       horas en America/Santiago (conversión y formato), compartido por panel y portal
+src/reservas/   HU-03: llamadas y caché, filtros, formulario, errores, pantallas
 src/rutas/      tabla de rutas (router, menú, guarda por rol y validación de `volver`)
-src/componentes/ layout y piezas comunes
+src/componentes/ layout y piezas comunes (sin conexión, error de carga)
 src/paginas/    login, inicio, sin permiso, no encontrada
 src/estilos/    tokens (colores, espacios, modo oscuro) y estilos globales
-src/pruebas/    servidor de auth falso y piezas falsas del navegador para Vitest
+src/pruebas/    servidores falsos (auth y reservas) y piezas falsas del navegador para Vitest
+scripts/        verificar-carga.mjs (se ejecuta al final del build)
 ```
 
 ## Sesión
 
 - El **access** vive solo en memoria. El **refresh** está en la cookie httpOnly `refresh_panel` (`Path=/api/auth/`), que maneja el navegador.
 - **Refresh silencioso** al abrir las rutas del panel y `/login`: mientras dura se muestra «Cargando…», nunca el formulario. Las rutas públicas no lo hacen.
+- **Arranque sin servidor**: si el refresh (o `/api/auth/yo/`) falla por red o responde 502, 503 o 504, en vez del login se muestra «No se pudo conectar con el servidor»; con un 500 (u otro error del backend), «El servidor tuvo un error». Ambos con **Reintentar**, y se reintenta solo una vez al volver la conexión (`online`); no hay reintentos periódicos. La URL se conserva. Con la marca de logout pendiente no hay refresh: se muestra el login con su aviso.
 - **Ante un 401** el cliente de la API renueva con una operación compartida por pestaña y repite la petición **una vez**. Las rutas `/api/auth/` no se reintentan.
 - **Entre pestañas** el refresh rota y deja el anterior en la lista negra, y la cookie es una sola:
   - con **Web Locks** (`isSecureContext && navigator.locks`: HTTPS o localhost) las renovaciones van en serie y ninguna recibe 401;
@@ -71,6 +75,29 @@ Después del login se vuelve a `?volver=` solo si, resuelto con `new URL(volver,
 ### Rutas y roles
 
 La tabla `src/rutas/tabla.tsx` define las pantallas con su título, si van al menú y los roles que pueden verlas. De ahí salen el router, el menú y la guarda por rol. **La guarda es solo UX**: la seguridad real la pone el backend (401/403 y aislamiento por empresa).
+
+### Carga diferida
+
+Todas las pantallas se cargan con `lazy`; el paquete inicial lleva solo el router, la sesión y el marco. Si un chunk no se puede descargar (p. ej. tras un despliegue), se muestra «Hay una versión nueva del panel» con Recargar. `npm run build` termina con `scripts/verificar-carga.mjs`, que lee `dist/.vite/modulos.json` (lo escribe un plugin de `vite.config.ts`) y falla si una pantalla no es lazy o si el paquete inicial o una ruta pública (login, no encontrada) cargan, por imports estáticos, algún módulo de `src/reservas/`.
+
+## Horas (America/Santiago)
+
+Las horas se ingresan y se muestran en hora de Santiago, sin depender de la zona del navegador ni suponer un desfase fijo (`src/hora/`):
+
+- **De pared a instante**: la hora escrita (`datetime-local`) se lee como si fuera UTC, se le restan los desfases vigentes un día antes y un día después, y se quedan los candidatos que, de vuelta a hora de Santiago (`Intl.DateTimeFormat` con `timeZone`), dan la misma hora. A la API va siempre el instante en UTC (`toISOString()`).
+- **Hora inexistente** (salto de septiembre, p. ej. 00:00 a 00:59 del 06-09-2026): se rechaza con un mensaje que indica el tramo y la primera hora válida.
+- **Hora repetida** (vuelta de abril, p. ej. 23:00 a 23:59 del 04-04-2026): por defecto la primera ocurrencia (UTC−3), con un aviso y el selector «primera (UTC−3) / segunda (UTC−4)». Al mostrar una hora repetida se agrega su desfase. Al editar, el valor inicial conserva cuál ocurrencia era, y la hora solo se envía si se cambió.
+- Los datos de zona son los del navegador: si Chile cambia sus reglas, un navegador desactualizado puede diferir del backend.
+- ESLint prohíbe fuera de `src/hora/` los métodos de `Date` que dependen de la zona del navegador (`getHours`, `getTimezoneOffset`, `toLocaleString`…).
+
+## Reservas (HU-03)
+
+- **Listado**: filtros del backend (estado repetible, día, desde/hasta, sentido, canal, búsqueda, orden) guardados en la URL, así sobreviven a F5 y se pueden compartir. `desde` y `hasta` van en la URL como hora de Santiago. Vista por defecto: «desde hoy 00:00» (hoy en Santiago), visible y removible; al quitarla la URL queda con `desde=`. Una fecha o un `hasta` la reemplazan. Paginación de 25.
+- **Crear**: canal Teléfono o WhatsApp (convenio llega con su HU); el vuelo solo con «Desde el aeropuerto». Teléfono: un valor de 9 dígitos que empieza con 9 (separadores aparte) se completa a `+569XXXXXXXX` en el mismo campo, a la vista, antes de validar; cualquier otro valor se exige en E.164. Tarifa fuera de HU-03.
+- **Editar**: solo en estados editables (pendiente de confirmación, solicitado); se envían solo los campos modificados (así no se pisa el vuelo ni su ETA). Pasajero, teléfono y canal en solo lectura: el PATCH no los acepta (PR-03). Un 409 bloquea el formulario y muestra el estado real.
+- **Cancelar**: motivo obligatorio (hasta 200 caracteres) en un diálogo que es la confirmación.
+- Los 400 del backend se muestran en cada campo; si la creación falla sin respuesta, se avisa que no se sabe si quedó creada.
+- **Caché** (TanStack Query): `['viajes', 'lista', consulta]` y `['viajes', 'detalle', id]`. Crear, editar y cancelar dejan el detalle nuevo en la caché e invalidan los listados; un 409 invalida el detalle y los listados.
 
 ## Producción (solo documentado)
 
