@@ -171,6 +171,7 @@ export function FormularioReserva({ modo, iniciales, viaje, enviar, describirFal
               valor={field.value}
               alCambiar={field.onChange}
               alSalir={field.onBlur}
+              refCampo={field.ref}
               error={errors.recogida?.message}
               ayuda="Hora de Chile continental (Santiago)."
             />
@@ -196,6 +197,7 @@ export function FormularioReserva({ modo, iniciales, viaje, enviar, describirFal
                 valor={field.value}
                 alCambiar={field.onChange}
                 alSalir={field.onBlur}
+                refCampo={field.ref}
                 error={errors.vuelo?.hora?.message}
               />
             )}

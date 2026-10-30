@@ -286,6 +286,15 @@ describe('editar reserva', () => {
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled();
   });
 
+  it('un 400 en la hora lleva el foco a la recogida', async () => {
+    const { viajes } = await abrirEdicion();
+    viajes.siguiente('PATCH /api/viajes/5/', { estado: 400, cuerpo: { recogida_en: ['La hora de recogida debe ser futura.'] } });
+    fijarHora('Recogida', '2026-11-03T08:00');
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+    expect(await screen.findByText('La hora de recogida debe ser futura.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText('Recogida')).toHaveFocus());
+  });
+
   it('un 400 al editar se muestra en su campo', async () => {
     const { viajes } = await abrirEdicion();
     viajes.siguiente('PATCH /api/viajes/5/', { estado: 400, cuerpo: { destino_dir: ['No se pudo ubicar la dirección.'] } });

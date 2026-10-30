@@ -295,6 +295,15 @@ describe('errores del envío', () => {
     await waitFor(() => expect(screen.getByLabelText('WhatsApp')).toHaveFocus());
   });
 
+  it('400 en la recogida (reloj del teléfono atrasado): el mensaje en el campo y el foco en él', async () => {
+    const servidor = new ServidorPortalFalso();
+    servidor.siguiente({ estado: 400, cuerpo: { recogida_en: ['La recogida debe ser al menos 30 minutos después de ahora.'] } });
+    await abrir(servidor);
+    await enviar(await llenar());
+    expect(await screen.findByText('La recogida debe ser al menos 30 minutos después de ahora.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText(/^Recogida/)).toHaveFocus());
+  });
+
   it('400 del vuelo anidado (hora_llegada) va a la llegada', async () => {
     const servidor = new ServidorPortalFalso();
     servidor.siguiente({ estado: 400, cuerpo: { vuelo: { hora_llegada: ['Fecha inválida.'] } } });

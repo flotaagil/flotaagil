@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type Ref } from 'react';
 import { instanteDeCampo, ocurrencias, type ValorFechaHora } from '../hora/hora';
 import estilos from './formularios.module.css';
 
@@ -12,13 +12,15 @@ interface Props {
   nombre: string;
   /** Mínimo sugerido al selector del navegador (hora de pared de Santiago). */
   min?: string;
+  /** Ref del control (React Hook Form la usa para enfocar el campo con error). */
+  refCampo?: Ref<HTMLInputElement>;
 }
 
 /**
  * Fecha y hora en Santiago (`datetime-local`). Una hora inexistente se avisa de inmediato; una repetida
  * muestra un aviso con el desfase aplicado y el selector «primera (UTC−3) / segunda (UTC−4)».
  */
-export function CampoFechaHora({ etiqueta, valor, alCambiar, alSalir, error, ayuda, nombre, min }: Props) {
+export function CampoFechaHora({ etiqueta, valor, alCambiar, alSalir, error, ayuda, nombre, min, refCampo }: Props) {
   const id = useId();
   const repetida = ocurrencias(valor.pared);
   const resultado = valor.pared ? instanteDeCampo(valor) : null;
@@ -28,6 +30,7 @@ export function CampoFechaHora({ etiqueta, valor, alCambiar, alSalir, error, ayu
     <div className={estilos.campo}>
       <label htmlFor={id}>{etiqueta}</label>
       <input
+        ref={refCampo}
         id={id}
         name={nombre}
         type="datetime-local"

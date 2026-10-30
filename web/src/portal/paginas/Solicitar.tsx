@@ -187,6 +187,7 @@ function FormularioSolicitud({ alEnviar, alNoDisponible }: Props) {
                   valor={field.value}
                   alCambiar={field.onChange}
                   alSalir={field.onBlur}
+                  refCampo={field.ref}
                   error={errors.vuelo?.hora?.message}
                 />
               )}
@@ -211,6 +212,7 @@ function FormularioSolicitud({ alEnviar, alNoDisponible }: Props) {
               valor={field.value}
               alCambiar={field.onChange}
               alSalir={field.onBlur}
+              refCampo={field.ref}
               error={errors.recogida?.message}
               ayuda={`Ahora en Chile: ${formatearFechaHora(aIso(ahora))}. Con al menos ${empresa.anticipacion_minima_min} minutos de anticipación.`}
               min={escribirPared(paredDe(minimo))}
