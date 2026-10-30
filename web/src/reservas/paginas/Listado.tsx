@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Aviso } from '../../componentes/Aviso';
 import { formatearFecha, formatearFechaHora, formatearPared } from '../../hora/hora';
@@ -192,7 +192,7 @@ export function Listado() {
               onChange={(evento) => aplicar({ hasta: evento.target.value || null })}
             />
           </label>
-          <label className={estilos.campo}>
+          <label className={`${estilos.campo} ${estilos.doble}`}>
             Ordenar por
             <select
               value={filtros.ordenar ?? 'recogida_en'}
@@ -288,29 +288,29 @@ export function Listado() {
               <tbody>
                 {datos.results.map((viaje) => (
                   <tr key={viaje.id}>
-                    <td data-titulo="Recogida">
+                    <Celda titulo="Recogida">
                       <Link to={`/reservas/${viaje.id}`}>{formatearFechaHora(viaje.recogida_en)}</Link>
                       <span className={estilos.secundario}>#{viaje.id}</span>
-                    </td>
-                    <td data-titulo="Pasajero">
+                    </Celda>
+                    <Celda titulo="Pasajero">
                       {viaje.pasajero.nombre}
                       <span className={estilos.secundario}>{viaje.pasajero.telefono}</span>
-                    </td>
-                    <td data-titulo="Trayecto" className={estilos.trayecto}>
+                    </Celda>
+                    <Celda titulo="Trayecto" ancho>
                       {viaje.origen.direccion}
                       <span className={estilos.secundario}>→ {viaje.destino.direccion}</span>
-                    </td>
-                    <td data-titulo="Sentido">
+                    </Celda>
+                    <Celda titulo="Sentido">
                       {viaje.sentido ? SENTIDOS[viaje.sentido] : '—'}
                       <span className={estilos.secundario}>
                         {CANALES[viaje.canal]}
                         {viaje.vuelo ? ` · ${viaje.vuelo.numero}` : ''}
                       </span>
-                    </td>
-                    <td data-titulo="Estado">
+                    </Celda>
+                    <Celda titulo="Estado">
                       <EstadoEtiqueta estado={viaje.estado ?? 'SOLICITADO'} />
-                    </td>
-                    <td data-titulo="Conductor">{viaje.conductor?.nombre ?? '—'}</td>
+                    </Celda>
+                    <Celda titulo="Conductor">{viaje.conductor?.nombre ?? '—'}</Celda>
                   </tr>
                 ))}
               </tbody>
@@ -339,6 +339,15 @@ export function Listado() {
         )
       )}
     </section>
+  );
+}
+
+/** Celda con su título: en celular la tabla pasa a tarjetas y el título va a la izquierda (CSS). */
+function Celda({ titulo, ancho, children }: { titulo: string; ancho?: boolean; children: ReactNode }) {
+  return (
+    <td data-titulo={titulo} className={ancho ? estilos.trayecto : undefined}>
+      <div>{children}</div>
+    </td>
   );
 }
 

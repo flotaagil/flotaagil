@@ -133,8 +133,16 @@
 .estados > summary {
   display: flex;
   align-items: center;
+  font-size: 16px;
   cursor: pointer;
   list-style: none;
+}
+
+/* En escritorio, el orden ocupa dos columnas para que se lea completo. */
+@media (min-width: 45rem) {
+  .doble {
+    grid-column: span 2;
+  }
 }
 
 .estados[open] > .opcionesEstado {
