@@ -9,7 +9,7 @@ La fuente de verdad es el Informe 2 (ES2). Si algo de este archivo choca con el 
 | Persona | Rol | Área |
 |---|---|---|
 | Renato González (`renatogonzalez08-source`) | Developer | `web/` (panel y portal), `app/` (app del conductor) |
-| Carlos Ortiz (usuario pendiente) | Scrum Master, líder, Developer | `backend/`, integraciones, `infra/` |
+| Carlos Ortiz (`ceal2013`) | Scrum Master, líder, Developer | `backend/`, integraciones, `infra/` |
 | Juan Pérez | Product Owner (integrante simulado) | Prioriza y acepta incrementos |
 
 HU-02 y HU-29 se trabajan en pareja. Cada PR lo revisa el otro integrante.
