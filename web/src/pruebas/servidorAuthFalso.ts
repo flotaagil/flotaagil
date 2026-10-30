@@ -4,7 +4,8 @@
  * - login con `{detail, code}` en los errores; solo acepta JSON (415 si no);
  * - refresh con rotación y lista negra; el rechazo responde 401 SIN Set-Cookie;
  * - logout idempotente: 204 con borrado de la cookie aunque falte, esté vencida o ya invalidada;
- * - un endpoint protegido (/api/viajes/) que acepta solo access vigentes.
+ * - las demás rutas de /api/ aceptan solo access vigentes; las atiende `api` si se instaló (p. ej. el servidor
+ *   de reservas falso) o, si no, un /api/viajes/ mínimo.
  *
  * La cookie es una sola para todas las «pestañas» (`frasco`), como en el navegador. El servidor procesa cada
  * petición en el orden en que llega (lee la cookie al enviarse), pero la entrega de la respuesta puede quedar
@@ -33,7 +34,7 @@ interface Pendiente {
   entregar(): void;
 }
 
-interface Respuesta {
+export interface Respuesta {
   estado: number;
   cuerpo?: unknown;
   /** undefined = sin Set-Cookie; null = borra la cookie; string = nuevo refresh. */
@@ -50,6 +51,12 @@ export class ServidorAuthFalso {
   limitarLogin = false;
   rechazarOrigen = false;
   pendientes: Pendiente[] = [];
+  /** URL completa (ruta + query) de cada petición, en orden. */
+  urls: string[] = [];
+
+  private fallas = new Map<string, number | 'red'>();
+  /** Atiende las rutas protegidas que no son de auth (ya con el access verificado). */
+  api: ((peticion: Request, url: URL) => Promise<Respuesta>) | null = null;
 
   private retenidas = new Set<string>();
   private refreshVigentes = new Map<string, UsuarioFalso>();
@@ -65,6 +72,16 @@ export class ServidorAuthFalso {
 
   soltar(ruta: string) {
     this.retenidas.delete(ruta);
+  }
+
+  /** Esa ruta responde con ese estado (cuerpo HTML, como un proxy) o falla por red, hasta `reparar`. */
+  fallar(ruta: string, falla: number | 'red') {
+    this.fallas.set(ruta, falla);
+  }
+
+  reparar(ruta?: string) {
+    if (ruta) this.fallas.delete(ruta);
+    else this.fallas.clear();
   }
 
   /** Entrega la respuesta retenida número `indice` (en orden de llegada al servidor). */
@@ -98,12 +115,17 @@ export class ServidorAuthFalso {
 
   fetch = async (entrada: Request | string, init?: RequestInit): Promise<Response> => {
     const peticion = entrada instanceof Request ? entrada : new Request(entrada, init);
-    const ruta = `${peticion.method} ${new URL(peticion.url).pathname}`;
+    const url = new URL(peticion.url);
+    const ruta = `${peticion.method} ${url.pathname}`;
     this.llamadas.push(ruta);
+    this.urls.push(`${peticion.method} ${url.pathname}${url.search}`);
     if (!this.enLinea) throw new TypeError('Failed to fetch');
+    const falla = this.fallas.get(ruta);
+    if (falla === 'red') throw new TypeError('Failed to fetch');
+    if (falla) return new Response('<html>Error</html>', { status: falla, headers: { 'Content-Type': 'text/html' } });
     // La cookie se lee al enviar, igual que en el navegador.
     const cookie = this.frasco.refresh;
-    const respuesta = await this.atender(ruta, peticion, cookie);
+    const respuesta = await this.atender(ruta, peticion, cookie, url);
     if (ruta === 'POST /api/auth/logout/' && this.perderRespuestaLogout) {
       throw new TypeError('Failed to fetch');
     }
@@ -132,7 +154,7 @@ export class ServidorAuthFalso {
     return access;
   }
 
-  private async atender(ruta: string, peticion: Request, cookie: string | null): Promise<Respuesta> {
+  private async atender(ruta: string, peticion: Request, cookie: string | null, url: URL): Promise<Respuesta> {
     if (ruta.startsWith('POST /api/auth/')) {
       if (!peticion.headers.get('Content-Type')?.startsWith('application/json')) {
         return { estado: 415, cuerpo: { detail: 'Tipo de medio no soportado.', code: 'unsupported_media_type' } };
@@ -140,6 +162,11 @@ export class ServidorAuthFalso {
       if (this.rechazarOrigen) {
         return { estado: 403, cuerpo: { detail: 'Origen no permitido.', code: 'origen_no_permitido' } };
       }
+    }
+    if (url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/auth/') && this.api) {
+      const access = peticion.headers.get('Authorization')?.replace('Bearer ', '') ?? '';
+      if (!this.accessVigentes.has(access)) return { estado: 401, cuerpo: { detail: 'Token inválido.', code: 'token_not_valid' } };
+      return this.api(peticion, url);
     }
     switch (ruta) {
       case 'POST /api/auth/token/':

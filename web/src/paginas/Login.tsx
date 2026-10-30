@@ -5,6 +5,7 @@ import { Navigate, useSearchParams } from 'react-router';
 import { z } from 'zod';
 import { Aviso } from '../componentes/Aviso';
 import { Cargando } from '../componentes/Cargando';
+import { SinConexion } from '../componentes/SinConexion';
 import { useRutas } from '../rutas/contexto';
 import { destinoSeguro } from '../rutas/volver';
 import { useIniciarSesion, useSesion } from '../sesion/SesionProvider';
@@ -31,6 +32,9 @@ export function Login() {
 
   // No se muestra el formulario hasta saber si ya hay sesión (refresh silencioso).
   if (estado.fase === 'inicial' || estado.fase === 'cargando') return <Cargando />;
+  if (estado.fase === 'sin_conexion') {
+    return <SinConexion motivo={estado.motivo} alReintentar={() => void sesion.reintentar()} />;
+  }
   if (estado.fase === 'autenticada') {
     return <Navigate to={destinoSeguro(parametros.get('volver'), rutas, window.location.origin)} replace />;
   }

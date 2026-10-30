@@ -78,19 +78,89 @@ describe('refresh silencioso al iniciar', () => {
     expect(servidor.cuenta('POST /api/auth/refresh/')).toBe(1);
   });
 
-  it('si /yo falla por red queda anónima', async () => {
-    const { servidor, entorno } = preparar();
+  it('si /yo responde 401 queda anónima', async () => {
+    const { servidor, sesion } = preparar();
     servidor.sembrarSesion();
-    const fetchDelServidor = entorno.fetch;
-    entorno.fetch = (entrada, init) => {
-      const url = entrada instanceof Request ? entrada.url : entrada;
-      if (url.endsWith('/api/auth/yo/')) return Promise.reject(new TypeError('Failed to fetch'));
-      return fetchDelServidor(entrada, init);
-    };
-    const sesion = crearSesion(entorno);
+    servidor.fallar('GET /api/auth/yo/', 401);
     await sesion.iniciar();
     expect(sesion.estado()).toEqual({ fase: 'anonima', aviso: null });
     expect(sesion.access()).toBeNull();
+  });
+});
+
+describe('arranque sin servidor', () => {
+  it.each([
+    ['red', 'red'],
+    [502, 'red'],
+    [503, 'red'],
+    [504, 'red'],
+    [500, 'servidor'],
+  ] as const)('refresh con %s → sin_conexion (%s), sin pasar al login', async (falla, motivo) => {
+    const { servidor, sesion } = preparar();
+    servidor.sembrarSesion();
+    servidor.fallar('POST /api/auth/refresh/', falla);
+    await sesion.iniciar();
+    expect(sesion.estado()).toEqual({ fase: 'sin_conexion', motivo });
+    expect(sesion.access()).toBeNull();
+  });
+
+  it.each([
+    ['red', 'red'],
+    [504, 'red'],
+    [500, 'servidor'],
+  ] as const)('/yo con %s → sin_conexion (%s)', async (falla, motivo) => {
+    const { servidor, sesion } = preparar();
+    servidor.sembrarSesion();
+    servidor.fallar('GET /api/auth/yo/', falla);
+    await sesion.iniciar();
+    expect(sesion.estado()).toEqual({ fase: 'sin_conexion', motivo });
+  });
+
+  it('Reintentar con el servidor de vuelta entra con la sesión (y con la cookie ya rotada)', async () => {
+    const { servidor, sesion } = preparar();
+    servidor.sembrarSesion();
+    servidor.fallar('GET /api/auth/yo/', 'red');
+    await sesion.iniciar();
+    servidor.reparar();
+    await sesion.reintentar();
+    expect(sesion.estado()).toMatchObject({ fase: 'autenticada' });
+    expect(servidor.cuenta('POST /api/auth/refresh/')).toBe(2);
+  });
+
+  it('Reintentar sin cookie lleva a anónima; varios clics hacen un solo intento', async () => {
+    const { servidor, sesion } = preparar();
+    servidor.fallar('POST /api/auth/refresh/', 'red');
+    await sesion.iniciar();
+    servidor.reparar();
+    await Promise.all([sesion.reintentar(), sesion.reintentar()]);
+    expect(sesion.estado()).toEqual({ fase: 'anonima', aviso: null });
+    expect(servidor.cuenta('POST /api/auth/refresh/')).toBe(2);
+    // En otra fase no hace nada.
+    await sesion.reintentar();
+    expect(servidor.cuenta('POST /api/auth/refresh/')).toBe(2);
+  });
+
+  it('al volver la conexión reintenta una vez, solo si estaba sin conexión', async () => {
+    const { servidor, sesion, volverLaConexion } = preparar();
+    servidor.sembrarSesion();
+    servidor.fallar('POST /api/auth/refresh/', 503);
+    await sesion.iniciar();
+    servidor.reparar();
+    volverLaConexion();
+    await vaciar(100);
+    expect(sesion.estado()).toMatchObject({ fase: 'autenticada' });
+    volverLaConexion();
+    await vaciar(100);
+    expect(servidor.cuenta('POST /api/auth/refresh/')).toBe(2);
+  });
+
+  it('la marca de logout pendiente tiene prioridad: login con su aviso, sin refresh', async () => {
+    const { servidor, sesion, entorno } = preparar();
+    entorno.almacen!.setItem(CLAVE_LOGOUT_PENDIENTE, 'x');
+    servidor.enLinea = false;
+    await sesion.iniciar();
+    expect(sesion.estado()).toEqual({ fase: 'anonima', aviso: MENSAJES.logout_no_confirmado });
+    expect(servidor.cuenta('POST /api/auth/refresh/')).toBe(0);
   });
 });
 

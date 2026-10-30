@@ -3,7 +3,9 @@
  *
  * - El access vive solo en memoria; el refresh, en la cookie httpOnly que maneja el navegador.
  * - `iniciar()` hace el refresh silencioso (solo lo llaman las rutas del panel y /login) y no se decide si
- *   mostrar el login hasta que termina.
+ *   mostrar el login hasta que termina. Si el servidor no responde (red, 502, 503, 504) o responde con un error
+ *   (500), la fase es `sin_conexion` y no se muestra el login: `reintentar()` (botón Reintentar o el evento
+ *   `online`) vuelve a arrancar.
  * - `renovarTrasRechazo()` lo usa el cliente de la API ante un 401: operación compartida por pestaña.
  * - sesion_invalida y sesion_expirada se tratan igual: se limpia la sesión y se vuelve a /login con
  *   «Tu sesión terminó».
@@ -13,7 +15,7 @@
  */
 
 import { auth, leerSesion, leerUsuario, type Usuario } from '../api/auth';
-import { leerCodigo, MENSAJES, mensajeDeError } from '../api/errores';
+import { leerCodigo, MENSAJES, mensajeDeError, motivoDeFalla, type MotivoFalla } from '../api/errores';
 import type { Canal, Entorno, MensajeSesion } from './entorno';
 import { crearMarca } from './marca';
 import { crearRenovador, NOMBRE_LOCK, type MotivoSinSesion } from './renovar';
@@ -22,6 +24,7 @@ export type EstadoSesion =
   | { fase: 'inicial' }
   | { fase: 'cargando' }
   | { fase: 'anonima'; aviso: string | null }
+  | { fase: 'sin_conexion'; motivo: MotivoFalla }
   | { fase: 'autenticada'; usuario: Usuario };
 
 export type ResultadoLogin = { ok: true } | { ok: false; mensaje: string };
@@ -33,6 +36,8 @@ export interface Sesion {
   alLimpiar(oyente: () => void): () => void;
   access(): string | null;
   iniciar(): Promise<void>;
+  /** Vuelve a arrancar después de `sin_conexion`; en otra fase no hace nada. */
+  reintentar(): Promise<void>;
   login(email: string, password: string): Promise<ResultadoLogin>;
   logout(): Promise<{ confirmado: boolean }>;
   renovarTrasRechazo(): Promise<string | null>;
@@ -125,24 +130,40 @@ export function crearSesion(e: Entorno): Sesion {
     }
     const resultado = await renovar();
     if (estado.fase !== 'cargando') return; // p. ej. llegó un logout de otra pestaña
+    if (resultado.tipo === 'error') {
+      fijar({ fase: 'sin_conexion', motivo: resultado.motivo });
+      return;
+    }
     if (resultado.tipo !== 'ok') {
       limpiar(null);
       return;
     }
-    let usuario: Usuario | null = null;
+    let usuario: Usuario | MotivoFalla | null = null;
     try {
       const respuesta = await auth.yo(e, resultado.access);
       if (respuesta.ok) usuario = await leerUsuario(respuesta);
+      else if (respuesta.status >= 500) usuario = motivoDeFalla(respuesta.status);
     } catch {
-      usuario = null;
+      usuario = 'red';
     }
     if (estado.fase !== 'cargando') return;
+    if (typeof usuario === 'string') {
+      // El refresh ya rotó la cookie: al reintentar se renueva con la nueva.
+      fijar({ fase: 'sin_conexion', motivo: usuario });
+      return;
+    }
     if (!usuario) {
       limpiar(null);
       return;
     }
     access = resultado.access;
     fijar({ fase: 'autenticada', usuario });
+  }
+
+  function reintentar(): Promise<void> {
+    if (estado.fase !== 'sin_conexion') return inicio ?? Promise.resolve();
+    inicio = arrancar();
+    return inicio;
   }
 
   return {
@@ -162,6 +183,8 @@ export function crearSesion(e: Entorno): Sesion {
       inicio = arrancar();
       return inicio;
     },
+
+    reintentar,
 
     async login(email, password) {
       // Si quedó un logout sin confirmar, se intenta antes: el login reemplazará la cookie.
@@ -220,7 +243,10 @@ export function crearSesion(e: Entorno): Sesion {
         canal = e.crearCanal();
         canal?.alRecibir(alRecibir);
       }
-      quitarOyenteConexion ??= e.alVolverLaConexion(() => void reintentarLogoutPendiente());
+      quitarOyenteConexion ??= e.alVolverLaConexion(() => {
+        void reintentarLogoutPendiente();
+        void reintentar();
+      });
       return () => {
         quitarOyenteConexion?.();
         quitarOyenteConexion = null;

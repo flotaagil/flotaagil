@@ -15,7 +15,7 @@
  */
 
 import { auth, leerAccess } from '../api/auth';
-import { leerCodigo } from '../api/errores';
+import { leerCodigo, motivoDeFalla, type MotivoFalla } from '../api/errores';
 import type { Entorno } from './entorno';
 import type { Marca } from './marca';
 
@@ -29,7 +29,7 @@ export type MotivoSinSesion = 'sesion_invalida' | 'sesion_expirada' | 'origen_no
 export type ResultadoRenovacion =
   | { tipo: 'ok'; access: string }
   | { tipo: 'sin_sesion'; motivo: MotivoSinSesion }
-  | { tipo: 'error'; motivo: 'red' | 'servidor' };
+  | { tipo: 'error'; motivo: MotivoFalla };
 
 const LOGOUT_PENDIENTE: ResultadoRenovacion = { tipo: 'sin_sesion', motivo: 'logout_pendiente' };
 
@@ -46,7 +46,7 @@ async function pedirRefresh(e: Entorno): Promise<ResultadoRenovacion> {
     return { tipo: 'sin_sesion', motivo: codigo === 'sesion_expirada' ? 'sesion_expirada' : 'sesion_invalida' };
   }
   if (respuesta.status === 403) return { tipo: 'sin_sesion', motivo: 'origen_no_permitido' };
-  return { tipo: 'error', motivo: 'servidor' };
+  return { tipo: 'error', motivo: motivoDeFalla(respuesta.status) };
 }
 
 function esperaAlAzar(e: Entorno): number {

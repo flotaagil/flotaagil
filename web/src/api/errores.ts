@@ -10,6 +10,7 @@ export const MENSAJES = {
   sesion_terminada: 'Tu sesión terminó. Inicia sesión de nuevo.',
   logout_no_confirmado: 'No se pudo confirmar el cierre de sesión en el servidor.',
   sin_conexion: 'No se pudo conectar con el servidor. Revisa tu conexión e intenta de nuevo.',
+  error_servidor: 'El servidor tuvo un error. Intenta de nuevo en un momento.',
   inesperado: 'Ocurrió un error inesperado. Intenta de nuevo.',
 } as const;
 
@@ -33,4 +34,14 @@ export function mensajeDeError(codigo: string | null, estado: number): string {
   if (codigo && codigo in MENSAJES) return MENSAJES[codigo as CodigoMensaje];
   if (estado === 429) return MENSAJES.throttled;
   return MENSAJES.inesperado;
+}
+
+/**
+ * Falla sin respuesta útil del backend. «red»: no se pudo conectar (sin red, o el proxy no lo alcanza: 502, 503,
+ * 504). «servidor»: el backend respondió con un error (500 u otro estado inesperado).
+ */
+export type MotivoFalla = 'red' | 'servidor';
+
+export function motivoDeFalla(estado: number): MotivoFalla {
+  return estado === 502 || estado === 503 || estado === 504 ? 'red' : 'servidor';
 }

@@ -85,13 +85,21 @@ describe('renovador', () => {
     expect(reloj.esperas).toHaveLength(0);
   });
 
-  it('un error del servidor no es «sin sesión»', async () => {
-    const { renovar } = preparar({ locks: true });
-    const servidor = new ServidorAuthFalso();
-    const { entorno } = crearEntorno({ servidor, locks: crearLocks() });
-    entorno.fetch = async () => new Response('', { status: 502 });
-    const renovarConFalla = crearRenovador(entorno, crearMarca(null));
-    expect(await renovarConFalla()).toEqual({ tipo: 'error', motivo: 'servidor' });
-    expect(await renovar()).toEqual({ tipo: 'sin_sesion', motivo: 'sesion_invalida' });
+  it.each([
+    [500, 'servidor'],
+    [502, 'red'],
+    [503, 'red'],
+    [504, 'red'],
+  ])('un %s no es «sin sesión»: es un error (%s)', async (estado, motivo) => {
+    const { servidor, renovar } = preparar({ locks: true });
+    servidor.sembrarSesion();
+    servidor.fallar(REFRESH, estado);
+    expect(await renovar()).toEqual({ tipo: 'error', motivo });
+  });
+
+  it('una falla de red es un error de red', async () => {
+    const { servidor, renovar } = preparar({ locks: true });
+    servidor.fallar(REFRESH, 'red');
+    expect(await renovar()).toEqual({ tipo: 'error', motivo: 'red' });
   });
 });

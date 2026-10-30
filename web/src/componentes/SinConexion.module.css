@@ -1,0 +1,39 @@
+.pagina {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--espacio-4);
+}
+
+.tarjeta {
+  width: 100%;
+  max-width: 28rem;
+  padding: var(--espacio-6);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+}
+
+.tarjeta h1 {
+  font-size: 1.25rem;
+}
+
+.tarjeta p {
+  margin: 0 0 var(--espacio-4);
+  color: var(--texto-suave);
+}
+
+.boton {
+  min-height: var(--toque);
+  padding: 0 var(--espacio-4);
+  border: 0;
+  border-radius: var(--radio);
+  background: var(--acento);
+  color: var(--sobre-acento);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boton:hover {
+  background: var(--acento-hover);
+}
